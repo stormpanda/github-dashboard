@@ -28,6 +28,24 @@ export interface TrafficViewsSummary {
   views: TrafficViewDay[];
 }
 
+export interface ClonesDay {
+  timestamp: string;
+  count: number;
+  uniques: number;
+}
+
+export interface TrafficClonesSummary {
+  count: number;
+  uniques: number;
+  clones: ClonesDay[];
+}
+
+export interface Referrer {
+  referrer: string;
+  count: number;
+  uniques: number;
+}
+
 export interface PopularPath {
   path: string;
   title: string;
@@ -57,6 +75,9 @@ export interface StargazerUser {
   login: string;
   avatar_url: string;
   html_url: string;
+  followers?: number;
+  public_repos?: number;
+  hasDetailedStats?: boolean;
 }
 
 export interface Stargazer {
@@ -66,6 +87,8 @@ export interface Stargazer {
 
 export interface RepoSummary {
   views: TrafficViewsSummary;
+  clones: TrafficClonesSummary;
+  referrers: Referrer[];
   paths: PopularPath[];
   releases: Release[];
   stargazers: Stargazer[];

@@ -54,7 +54,7 @@
         <span class="status-dot online"></span>
         <span class="status-text">Connected to local `gh`</span>
       </div>
-      <p class="copyright">v1.0.0 · Localhost Mode</p>
+      <p class="copyright">v1.1.0 · DevRel Expansion</p>
     </footer>
   </aside>
 
@@ -92,8 +92,8 @@
       @if (loadingSummary() && !summary()) {
         <div class="dashboard-loading-state">
           <div class="spinner large"></div>
-          <h3>Gathering GitHub Analytics</h3>
-          <p>Running `gh api` CLI requests in the background...</p>
+          <h3>Running Marketing Profilers</h3>
+          <p>Requesting Views, Clones, Referrers, and Stargazer followers via local `gh` CLI...</p>
         </div>
       } @else if (summaryError()) {
         <div class="dashboard-error-state">
@@ -115,17 +115,17 @@
                 <span class="metric-icon">👁️</span>
               </div>
               <div class="metric-value">{{ totalViews() | number }}</div>
-              <p class="metric-sub">Total visits to repository pages</p>
+              <p class="metric-sub"><b>{{ uniqueVisitors() | number }}</b> unique visitors</p>
             </div>
 
-            <!-- Card 2: Unique Visitors -->
+            <!-- Card 2: Code Clones -->
             <div class="metric-card uniques">
               <div class="metric-header">
-                <span class="metric-title">Unique Visitors</span>
-                <span class="metric-icon">👥</span>
+                <span class="metric-title">14-Day Code Clones</span>
+                <span class="metric-icon">📥</span>
               </div>
-              <div class="metric-value">{{ uniqueVisitors() | number }}</div>
-              <p class="metric-sub">Individual users visiting repo</p>
+              <div class="metric-value">{{ totalClones() | number }}</div>
+              <p class="metric-sub"><b>{{ uniqueCloners() | number }}</b> unique developers</p>
             </div>
 
             <!-- Card 3: Asset Downloads -->
@@ -149,50 +149,129 @@
             </div>
           </div>
 
-          <!-- Section 1: Traffic Chart & Popular Paths -->
+          <!-- Section 1: Interactive SVG Visual Charts -->
           <div class="grid-section split-2">
-            
-            <!-- Traffic Views History Card -->
-            <div class="data-card traffic-chart-card">
+            <!-- 1. Daily Engagement Chart (Views vs Clones overlay) -->
+            <div class="data-card svg-chart-card">
               <div class="card-header">
-                <h3>Daily Visitor Engagement</h3>
-                <span class="badge">Last 14 Days</span>
+                <div class="card-title-group">
+                  <h3>Daily Visitor Engagement</h3>
+                  <p class="card-subtitle">Views (Blue) vs. Clones (Emerald) over 14 days</p>
+                </div>
+                <span class="badge">Engagement Trends</span>
               </div>
               <div class="chart-container">
-                @if (viewsHistory().length > 0) {
-                  <div class="bar-chart">
-                    @for (day of viewsHistory(); track day.timestamp) {
-                      <div class="chart-column">
-                        <div class="bar-group">
-                          <!-- Total Views Bar -->
-                          <div class="bar views-bar" 
-                               [style.height.%]="(day.count / maxDayCount()) * 85 + 5"
-                               [attr.title]="'Total Views: ' + day.count">
-                            <span class="tooltip">Views: {{ day.count }}</span>
-                          </div>
-                          <!-- Unique Users Bar -->
-                          <div class="bar uniques-bar" 
-                               [style.height.%]="(day.uniques / maxDayCount()) * 85 + 5"
-                               [attr.title]="'Unique: ' + day.uniques">
-                            <span class="tooltip">Uniques: {{ day.uniques }}</span>
-                          </div>
-                        </div>
-                        <span class="chart-date">{{ day.timestamp | date:'MM/dd' }}</span>
-                      </div>
-                    }
+                @if (dailyTrends().length > 1) {
+                  <div class="svg-chart-wrap">
+                    <svg viewBox="0 0 600 180" class="svg-chart" preserveAspectRatio="none">
+                      <defs>
+                        <linearGradient id="viewsGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.18"/>
+                          <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.00"/>
+                        </linearGradient>
+                        <linearGradient id="clonesGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stop-color="#10b981" stop-opacity="0.18"/>
+                          <stop offset="100%" stop-color="#10b981" stop-opacity="0.00"/>
+                        </linearGradient>
+                      </defs>
+                      <!-- Horizontal Grid lines -->
+                      <line x1="0" y1="15" x2="600" y2="15" stroke="rgba(255,255,255,0.03)" stroke-width="1" />
+                      <line x1="0" y1="85" x2="600" y2="85" stroke="rgba(255,255,255,0.03)" stroke-width="1" />
+                      <line x1="0" y1="155" x2="600" y2="155" stroke="rgba(255,255,255,0.03)" stroke-width="1" />
+                      
+                      <!-- Views Area & Line -->
+                      <path [attr.d]="engagementChartPaths().viewsArea" fill="url(#viewsGrad)" />
+                      <path [attr.d]="engagementChartPaths().viewsLine" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" />
+                      
+                      <!-- Clones Area & Line -->
+                      <path [attr.d]="engagementChartPaths().clonesArea" fill="url(#clonesGrad)" />
+                      <path [attr.d]="engagementChartPaths().clonesLine" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" />
+                      
+                      <!-- Interactive Hover Circles -->
+                      @for (pt of engagementChartPaths().points; track pt.date) {
+                        <circle [attr.cx]="pt.x" [attr.cy]="pt.yViews" r="4" fill="#3b82f6" stroke="#fff" stroke-width="1.5" class="chart-point" />
+                        <circle [attr.cx]="pt.x" [attr.cy]="pt.yClones" r="4" fill="#10b981" stroke="#fff" stroke-width="1.5" class="chart-point" />
+                      }
+                    </svg>
+
+                    <!-- Interactive X-Axis Labels -->
+                    <div class="chart-x-axis">
+                      @for (pt of engagementChartPaths().points; track pt.date; let isLast = $last, isFirst = $first) {
+                        @if (isFirst || isLast || $index === 4 || $index === 9) {
+                          <span class="axis-label" [style.left.%]="(pt.x / 600) * 100">{{ pt.date | date:'MM/dd' }}</span>
+                        }
+                      }
+                    </div>
                   </div>
                   <div class="chart-legend">
-                    <div class="legend-item"><span class="legend-dot views-dot"></span> Total Views</div>
-                    <div class="legend-item"><span class="legend-dot uniques-dot"></span> Unique Visitors</div>
+                    <div class="legend-item"><span class="legend-dot views-dot"></span> Seitenaufrufe (Views)</div>
+                    <div class="legend-item"><span class="legend-dot clones-dot"></span> Code-Downloads (Clones)</div>
                   </div>
                 } @else {
                   <div class="empty-state-placeholder">
-                    <span>No traffic history available for this repository.</span>
+                    <span>Not enough data points to plot engagement history.</span>
                   </div>
                 }
               </div>
             </div>
 
+            <!-- 2. Stars Traction Velocity Area Chart -->
+            <div class="data-card svg-chart-card">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <h3>Cumulative Star Growth</h3>
+                  <p class="card-subtitle">Repository popularity trajectory over stargazer timelines</p>
+                </div>
+                <span class="badge">Star Growth Velocity</span>
+              </div>
+              <div class="chart-container">
+                @if (starGrowthHistory().length > 1) {
+                  <div class="svg-chart-wrap">
+                    <svg viewBox="0 0 600 180" class="svg-chart" preserveAspectRatio="none">
+                      <defs>
+                        <linearGradient id="starsGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.25"/>
+                          <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.00"/>
+                        </linearGradient>
+                      </defs>
+                      <!-- Horizontal Grid lines -->
+                      <line x1="0" y1="15" x2="600" y2="15" stroke="rgba(255,255,255,0.03)" stroke-width="1" />
+                      <line x1="0" y1="85" x2="600" y2="85" stroke="rgba(255,255,255,0.03)" stroke-width="1" />
+                      <line x1="0" y1="155" x2="600" y2="155" stroke="rgba(255,255,255,0.03)" stroke-width="1" />
+                      
+                      <!-- Stars Area & Line -->
+                      <path [attr.d]="starChartPaths().area" fill="url(#starsGrad)" />
+                      <path [attr.d]="starChartPaths().line" fill="none" stroke="#8b5cf6" stroke-width="2.5" stroke-linecap="round" />
+                      
+                      <!-- Interactive Points -->
+                      @for (pt of starChartPaths().points; track pt.date) {
+                        <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="4" fill="#8b5cf6" stroke="#fff" stroke-width="1.5" class="chart-point" />
+                      }
+                    </svg>
+
+                    <!-- Interactive X-Axis Labels -->
+                    <div class="chart-x-axis">
+                      @for (pt of starChartPaths().points; track pt.date; let isLast = $last, isFirst = $first) {
+                        @if (isFirst || isLast || $index === Math.floor(starChartPaths().points.length / 2)) {
+                          <span class="axis-label" [style.left.%]="(pt.x / 600) * 100">{{ pt.date | date:'MM/dd' }}</span>
+                        }
+                      }
+                    </div>
+                  </div>
+                  <div class="chart-legend">
+                    <div class="legend-item"><span class="legend-dot stars-dot"></span> Gesamte Sterne (Stars)</div>
+                  </div>
+                } @else {
+                  <div class="empty-state-placeholder">
+                    <span>Not enough stargazer dates to plot star growth curve.</span>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: Popular Content Paths & Top Traffic Referrers -->
+          <div class="grid-section split-2">
             <!-- Popular Paths Card -->
             <div class="data-card paths-card">
               <div class="card-header">
@@ -227,11 +306,45 @@
                 </table>
               </div>
             </div>
+
+            <!-- Top Traffic Referral Sources -->
+            <div class="data-card referrers-card">
+              <div class="card-header">
+                <h3>Top Traffic Referral Sources</h3>
+                <span class="badge">Marketing Referrers</span>
+              </div>
+              <div class="table-container">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Referrer Domain</th>
+                      <th class="text-right">Views</th>
+                      <th class="text-right">Uniques</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (item of referrers(); track item.referrer) {
+                      <tr>
+                        <td class="file-path-cell">
+                          <span class="referrer-icon">🔗</span>
+                          <span class="file-path font-bold">{{ item.referrer }}</span>
+                        </td>
+                        <td class="text-right num-highlight-blue">{{ item.count | number }}</td>
+                        <td class="text-right num-highlight-secondary">{{ item.uniques | number }}</td>
+                      </tr>
+                    } @empty {
+                      <tr>
+                        <td colspan="3" class="table-empty">No referral domains logged in the last 14 days.</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
 
-          <!-- Section 2: Releases & Stargazers -->
+          <!-- Section 3: Releases & Stargazers -->
           <div class="grid-section split-2">
-            
             <!-- Release Asset Downloads Card -->
             <div class="data-card releases-card">
               <div class="card-header">
@@ -277,19 +390,33 @@
               </div>
             </div>
 
-            <!-- Stargazers Log Card -->
+            <!-- Stargazers Log Card (with Influence Levels) -->
             <div class="data-card stargazers-card">
               <div class="card-header">
                 <h3>Recent Stargazers Activity</h3>
-                <span class="badge">Recent Star Growth</span>
+                <span class="badge">Advocate Followers</span>
               </div>
               <div class="stargazers-container">
                 <div class="stargazers-grid">
-                  @for (star of data.stargazers; track star.user.login) {
-                    <a [href]="star.user.html_url" target="_blank" class="stargazer-item" rel="noopener">
+                  @for (star of stargazersList(); track star.user.login) {
+                    <a [href]="star.user.html_url" target="_blank" class="stargazer-item" [class.profiled]="star.user.hasDetailedStats" rel="noopener">
                       <img [src]="star.user.avatar_url" [alt]="star.user.login" class="user-avatar" />
                       <div class="user-info">
-                        <span class="user-name">{{ star.user.login }}</span>
+                        <div class="user-name-row">
+                          <span class="user-name">{{ star.user.login }}</span>
+                          @if (getInfluenceLabel(star.user); as label) {
+                            <span class="influence-badge" [class]="label | lowercase">
+                              {{ label }}
+                            </span>
+                          }
+                        </div>
+                        
+                        @if (star.user.hasDetailedStats) {
+                          <div class="user-stats-row">
+                            <span class="stat-badge">👥 {{ star.user.followers | number }} followers</span>
+                            <span class="stat-badge">💻 {{ star.user.public_repos }} repos</span>
+                          </div>
+                        }
                         <span class="starred-date">Starred {{ star.starred_at | date:'shortDate' }}</span>
                       </div>
                     </a>
@@ -302,7 +429,6 @@
                 </div>
               </div>
             </div>
-
           </div>
 
           <!-- Bottom Footer Details -->

@@ -131,7 +131,7 @@ app.get('/api/repos', async (req, res) => {
   }
 });
 
-// 2. GET /api/repos/:owner/:repo/summary - Aggregated stats for the selected repository
+// 2. GET /api/repos/:owner/:repo/summary - Aggregated stats for the selected repository (Phase 2 Expanded)
 app.get('/api/repos/:owner/:repo/summary', async (req, res) => {
   const { owner, repo } = req.params;
   const repoStr = `${owner}/${repo}`;
@@ -154,18 +154,63 @@ app.get('/api/repos/:owner/:repo/summary', async (req, res) => {
   }
 
   try {
-    const [viewsData, pathsData, releasesData, stargazersData] = await Promise.allSettled([
+    const [viewsData, clonesData, referrersData, pathsData, releasesData, stargazersData] = await Promise.allSettled([
       runGhApi(`repos/${repoStr}/traffic/views`),
+      runGhApi(`repos/${repoStr}/traffic/clones`),
+      runGhApi(`repos/${repoStr}/traffic/popular/referrers`),
       runGhApi(`repos/${repoStr}/traffic/popular/paths`),
       runGhApi(`repos/${repoStr}/releases`),
       runGhApi(`repos/${repoStr}/stargazers`, ['Accept: application/vnd.github.v3.star+json'])
     ]);
 
+    // Parse stargazers
+    let stargazers = stargazersData.status === 'fulfilled' ? stargazersData.value : [];
+    
+    // Sort chronological descending (newest stargazer first)
+    if (Array.isArray(stargazers)) {
+      stargazers = [...stargazers].reverse();
+    } else {
+      stargazers = [];
+    }
+
+    // Dynamic Rate-Limit Safe Profiling: Fetch follower/repo data only for the 5 most recent stargazers
+    const topStargazersToProfile = stargazers.slice(0, 5);
+    const detailedStargazers = await Promise.all(
+      topStargazersToProfile.map(async (star: any) => {
+        try {
+          const username = star.user?.login;
+          if (!username) return star;
+          
+          const profile = await runGhApi(`users/${username}`);
+          return {
+            ...star,
+            user: {
+              ...star.user,
+              followers: profile.followers ?? 0,
+              public_repos: profile.public_repos ?? 0,
+              hasDetailedStats: true
+            }
+          };
+        } catch (err: any) {
+          console.error(`Failed to profile stargazer ${star.user?.login}:`, err.message);
+          return star;
+        }
+      })
+    );
+
+    // Reconstruct list: profiled stargazers first, then the remaining list
+    const finalStargazers = [
+      ...detailedStargazers,
+      ...stargazers.slice(5)
+    ];
+
     const summary = {
       views: viewsData.status === 'fulfilled' ? viewsData.value : { count: 0, uniques: 0, views: [] },
+      clones: clonesData.status === 'fulfilled' ? clonesData.value : { count: 0, uniques: 0, clones: [] },
+      referrers: referrersData.status === 'fulfilled' ? referrersData.value : [],
       paths: pathsData.status === 'fulfilled' ? pathsData.value : [],
       releases: releasesData.status === 'fulfilled' ? releasesData.value : [],
-      stargazers: stargazersData.status === 'fulfilled' ? stargazersData.value : [],
+      stargazers: finalStargazers,
       fetchedAt: now
     };
 

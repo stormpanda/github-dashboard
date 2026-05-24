@@ -1,4 +1,4 @@
-// Dashboard SCSS Design System
+// GitPulse Expanded SCSS Design System (Phase 2)
 
 // Core tokens
 $bg-dark: #070a13;
@@ -37,6 +37,10 @@ $text-muted: #6b7280;
   }
 }
 
+@keyframes drawPath {
+  to { stroke-dashoffset: 0; }
+}
+
 .dashboard-container {
   display: flex;
   width: 100vw;
@@ -54,7 +58,6 @@ $text-muted: #6b7280;
   background: $bg-sidebar;
   border-right: 1px solid $border-color;
   display: flex;
-  flex-direction: flex-direction;
   flex-direction: column;
   flex-shrink: 0;
   backdrop-filter: blur(20px);
@@ -533,8 +536,13 @@ $text-muted: #6b7280;
 
   .metric-sub {
     font-size: 12px;
-    color: $text-muted;
+    color: $text-secondary;
     margin-top: 6px;
+    opacity: 0.85;
+
+    b {
+      color: #fff;
+    }
   }
 
   // Card themes
@@ -574,10 +582,21 @@ $text-muted: #6b7280;
     justify-content: space-between;
     margin-bottom: 24px;
 
+    .card-title-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
     h3 {
       font-size: 16px;
       font-weight: 600;
       color: #fff;
+    }
+
+    .card-subtitle {
+      font-size: 12px;
+      color: $text-secondary;
     }
 
     .badge {
@@ -603,7 +622,7 @@ $text-muted: #6b7280;
   }
 }
 
-// Chart layout
+// Native SVG Chart styling (Phase 2 Expanded)
 .chart-container {
   flex: 1;
   display: flex;
@@ -611,93 +630,53 @@ $text-muted: #6b7280;
   justify-content: space-between;
 }
 
-.bar-chart {
-  flex: 1;
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 8px;
-  height: 200px;
-  border-bottom: 1px solid $border-color;
-  padding-bottom: 12px;
+.svg-chart-wrap {
+  position: relative;
+  width: 100%;
+  height: 180px;
   margin-bottom: 16px;
+  padding-bottom: 20px;
 }
 
-.chart-column {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+.svg-chart {
+  width: 100%;
   height: 100%;
-  justify-content: flex-end;
-  cursor: pointer;
+  overflow: visible;
 
-  .bar-group {
-    width: 100%;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    gap: 2px;
-    height: 100%;
-    position: relative;
-  }
-
-  .bar {
-    width: 8px;
-    border-radius: 4px 4px 0 0;
-    transition: all 0.25s ease;
-    min-height: 4px;
-
-    &.views-bar {
-      background: rgba(59, 130, 246, 0.65);
-    }
-
-    &.uniques-bar {
-      background: rgba(16, 185, 129, 0.65);
-    }
-  }
-
-  // Hover states & custom tooltips
-  &:hover {
-    .views-bar {
-      background: $accent-blue;
-      box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
-    }
-    .uniques-bar {
-      background: $accent-emerald;
-      box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
-    }
-
-    .tooltip {
-      opacity: 1;
-      transform: translateX(-50%) translateY(-8px);
-    }
-  }
-
-  .tooltip {
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%) translateY(0);
-    background: #111827;
-    border: 1px solid $border-color;
-    color: #fff;
-    font-size: 11px;
-    font-weight: 600;
-    padding: 4px 8px;
-    border-radius: 6px;
-    pointer-events: none;
+  .chart-point {
     opacity: 0;
-    white-space: nowrap;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
-    z-index: 20;
+    scale: 0.8;
+    transform-origin: center;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: crosshair;
   }
 
-  .chart-date {
+  // Hover point details
+  &:hover {
+    .chart-point {
+      opacity: 1;
+      scale: 1;
+    }
+  }
+}
+
+// X-Axis layout
+.chart-x-axis {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 20px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.05);
+  display: flex;
+
+  .axis-label {
+    position: absolute;
+    top: 6px;
+    transform: translateX(-50%);
     font-size: 10px;
     color: $text-muted;
-    margin-top: 8px;
+    font-weight: 500;
   }
 }
 
@@ -721,7 +700,8 @@ $text-muted: #6b7280;
     border-radius: 3px;
 
     &.views-dot { background: $accent-blue; }
-    &.uniques-dot { background: $accent-emerald; }
+    &.clones-dot { background: $accent-emerald; }
+    &.stars-dot { background: $accent-purple; }
   }
 }
 
@@ -796,6 +776,11 @@ $text-muted: #6b7280;
       font-size: 14px;
     }
 
+    .referrer-icon {
+      font-size: 14px;
+      opacity: 0.8;
+    }
+
     .file-path {
       overflow: hidden;
       text-overflow: ellipsis;
@@ -803,11 +788,22 @@ $text-muted: #6b7280;
       font-family: monospace;
       font-size: 12px;
       color: #e5e7eb;
+
+      &.font-bold {
+        font-family: inherit;
+        font-weight: 600;
+        font-size: 13px;
+      }
     }
   }
 
   .num-highlight {
     color: #93c5fd;
+    font-weight: 600;
+  }
+
+  .num-highlight-blue {
+    color: #60a5fa;
     font-weight: 600;
   }
 
@@ -954,7 +950,7 @@ $text-muted: #6b7280;
   }
 }
 
-// Stargazers log styling
+// Stargazers log styling (detailed influence upgrades)
 .stargazers-container {
   flex: 1;
   overflow-y: auto;
@@ -986,7 +982,7 @@ $text-muted: #6b7280;
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px;
+  padding: 12px;
   border-radius: 10px;
   border: 1px solid transparent;
   background: rgba(255, 255, 255, 0.01);
@@ -994,14 +990,24 @@ $text-muted: #6b7280;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover {
-    background: rgba(139, 92, 246, 0.05);
-    border-color: rgba(139, 92, 246, 0.15);
-    transform: scale(1.02);
+    background: rgba(255, 255, 255, 0.02);
+    border-color: rgba(255, 255, 255, 0.05);
+    transform: scale(1.01);
+  }
+
+  &.profiled {
+    background: rgba(139, 92, 246, 0.01);
+    border-color: rgba(139, 92, 246, 0.05);
+
+    &:hover {
+      background: rgba(139, 92, 246, 0.04);
+      border-color: rgba(139, 92, 246, 0.15);
+    }
   }
 
   .user-avatar {
-    width: 36px;
-    height: 36px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     border: 1.5px solid rgba(255, 255, 255, 0.1);
   }
@@ -1009,16 +1015,74 @@ $text-muted: #6b7280;
   .user-info {
     display: flex;
     flex-direction: column;
+    gap: 3px;
+    flex: 1;
     min-width: 0;
 
-    .user-name {
-      font-size: 13px;
-      font-weight: 600;
-      color: $text-primary;
+    .user-name-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+
+      .user-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: $text-primary;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+
+    // Custom Advocate prestige labels
+    .influence-badge {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 1.5px 5px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+
+      &.titan {
+        background: rgba(245, 158, 11, 0.1);
+        border: 1px solid rgba(245, 158, 11, 0.25);
+        color: #fbbf24;
+        box-shadow: 0 0 8px rgba(245, 158, 11, 0.15);
+      }
+
+      &.catalyst {
+        background: rgba(139, 92, 246, 0.1);
+        border: 1px solid rgba(139, 92, 246, 0.25);
+        color: #c084fc;
+        box-shadow: 0 0 8px rgba(139, 92, 246, 0.15);
+      }
+
+      &.advocate {
+        background: rgba(59, 130, 246, 0.15);
+        border: 1px solid rgba(59, 130, 246, 0.25);
+        color: #60a5fa;
+      }
+    }
+
+    // Followers / repos statistics capsules
+    .user-stats-row {
+      display: flex;
+      gap: 6px;
+
+      .stat-badge {
+        font-size: 10px;
+        color: $text-secondary;
+        background: rgba(255, 255, 255, 0.04);
+        padding: 1px 6px;
+        border-radius: 4px;
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        font-weight: 500;
+      }
     }
 
     .starred-date {
-      font-size: 11px;
+      font-size: 10px;
       color: $text-muted;
     }
   }
