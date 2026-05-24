@@ -390,44 +390,97 @@
               </div>
             </div>
 
-            <!-- Stargazers Log Card (with Influence Levels) -->
-            <div class="data-card stargazers-card">
-              <div class="card-header">
-                <h3>Recent Stargazers Activity</h3>
-                <span class="badge">Advocate Followers</span>
-              </div>
-              <div class="stargazers-container">
-                <div class="stargazers-grid">
-                  @for (star of stargazersList(); track star.user.login) {
-                    <a [href]="star.user.html_url" target="_blank" class="stargazer-item" [class.profiled]="star.user.hasDetailedStats" rel="noopener">
-                      <img [src]="star.user.avatar_url" [alt]="star.user.login" class="user-avatar" />
-                      <div class="user-info">
-                        <div class="user-name-row">
-                          <span class="user-name">{{ star.user.login }}</span>
-                          @if (getInfluenceLabel(star.user); as label) {
-                            <span class="influence-badge" [class]="label | lowercase">
-                              {{ label }}
-                            </span>
-                          }
-                        </div>
-                        
-                        @if (star.user.hasDetailedStats) {
-                          <div class="user-stats-row">
-                            <span class="stat-badge">👥 {{ star.user.followers | number }} followers</span>
-                            <span class="stat-badge">💻 {{ star.user.public_repos }} repos</span>
-                          </div>
-                        }
-                        <span class="starred-date">Starred {{ star.starred_at | date:'shortDate' }}</span>
-                      </div>
-                    </a>
-                  } @empty {
-                    <div class="empty-state-placeholder">
-                      <span class="empty-icon">⭐</span>
-                      <span>No stargazers logged yet. Be the first to star!</span>
-                    </div>
-                  }
+            <!-- Stargazers & Forks Tabbed Log Card (with Influence Levels) -->
+            <div class="data-card stargazers-card tabbed-card">
+              <div class="card-header tabbed-header">
+                <div class="card-tabs">
+                  <button class="tab-btn" 
+                          [class.active]="activeTab() === 'stargazers'" 
+                          (click)="activeTab.set('stargazers')">
+                    ⭐ Stargazers
+                  </button>
+                  <button class="tab-btn" 
+                          [class.active]="activeTab() === 'forks'" 
+                          (click)="activeTab.set('forks')">
+                    🔱 Forks (Klone)
+                  </button>
                 </div>
+                <span class="badge">
+                  @if (activeTab() === 'stargazers') {
+                    Advocate Followers
+                  } @else {
+                    Repository Copies
+                  }
+                </span>
               </div>
+
+              @if (activeTab() === 'stargazers') {
+                <div class="stargazers-container">
+                  <div class="stargazers-grid">
+                    @for (star of stargazersList(); track star.user.login) {
+                      <a [href]="star.user.html_url" target="_blank" class="stargazer-item" [class.profiled]="star.user.hasDetailedStats" rel="noopener">
+                        <img [src]="star.user.avatar_url" [alt]="star.user.login" class="user-avatar" />
+                        <div class="user-info">
+                          <div class="user-name-row">
+                            <span class="user-name">{{ star.user.login }}</span>
+                            @if (getInfluenceLabel(star.user); as label) {
+                              <span class="influence-badge" [class]="label | lowercase">
+                                {{ label }}
+                              </span>
+                            }
+                          </div>
+                          
+                          @if (star.user.hasDetailedStats) {
+                            <div class="user-stats-row">
+                              <span class="stat-badge">👥 {{ star.user.followers | number }} followers</span>
+                              <span class="stat-badge">💻 {{ star.user.public_repos }} repos</span>
+                            </div>
+                          }
+                          <span class="starred-date">Starred {{ star.starred_at | date:'shortDate' }}</span>
+                        </div>
+                      </a>
+                    } @empty {
+                      <div class="empty-state-placeholder">
+                        <span class="empty-icon">⭐</span>
+                        <span>No stargazers logged yet. Be the first to star!</span>
+                      </div>
+                    }
+                  </div>
+                </div>
+              } @else {
+                <div class="stargazers-container">
+                  <div class="stargazers-grid">
+                    @for (fork of forksList(); track fork.id) {
+                      <a [href]="fork.html_url" target="_blank" class="stargazer-item" [class.profiled]="fork.owner.hasDetailedStats" rel="noopener">
+                        <img [src]="fork.owner.avatar_url" [alt]="fork.owner.login" class="user-avatar" />
+                        <div class="user-info">
+                          <div class="user-name-row">
+                            <span class="user-name">{{ fork.owner.login }}</span>
+                            @if (getInfluenceLabel(fork.owner); as label) {
+                              <span class="influence-badge" [class]="label | lowercase">
+                                {{ label }}
+                              </span>
+                            }
+                          </div>
+                          
+                          @if (fork.owner.hasDetailedStats) {
+                            <div class="user-stats-row">
+                              <span class="stat-badge">👥 {{ fork.owner.followers | number }} followers</span>
+                              <span class="stat-badge">💻 {{ fork.owner.public_repos }} repos</span>
+                            </div>
+                          }
+                          <span class="starred-date">Forked {{ fork.created_at | date:'shortDate' }}</span>
+                        </div>
+                      </a>
+                    } @empty {
+                      <div class="empty-state-placeholder">
+                        <span class="empty-icon">🔱</span>
+                        <span>No forks created yet. Be the first to fork/copy!</span>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
             </div>
           </div>
 

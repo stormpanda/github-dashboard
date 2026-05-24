@@ -154,13 +154,14 @@ app.get('/api/repos/:owner/:repo/summary', async (req, res) => {
   }
 
   try {
-    const [viewsData, clonesData, referrersData, pathsData, releasesData, stargazersData] = await Promise.allSettled([
+    const [viewsData, clonesData, referrersData, pathsData, releasesData, stargazersData, forksData] = await Promise.allSettled([
       runGhApi(`repos/${repoStr}/traffic/views`),
       runGhApi(`repos/${repoStr}/traffic/clones`),
       runGhApi(`repos/${repoStr}/traffic/popular/referrers`),
       runGhApi(`repos/${repoStr}/traffic/popular/paths`),
       runGhApi(`repos/${repoStr}/releases`),
-      runGhApi(`repos/${repoStr}/stargazers`, ['Accept: application/vnd.github.v3.star+json'])
+      runGhApi(`repos/${repoStr}/stargazers`, ['Accept: application/vnd.github.v3.star+json']),
+      runGhApi(`repos/${repoStr}/forks`)
     ]);
 
     // Parse stargazers
@@ -204,6 +205,42 @@ app.get('/api/repos/:owner/:repo/summary', async (req, res) => {
       ...stargazers.slice(5)
     ];
 
+    // Parse forks
+    let forks = forksData.status === 'fulfilled' ? forksData.value : [];
+    if (!Array.isArray(forks)) {
+      forks = [];
+    }
+
+    // Dynamic Rate-Limit Safe Profiling: Fetch follower/repo data only for the 5 most recent forks
+    const topForksToProfile = forks.slice(0, 5);
+    const detailedForks = await Promise.all(
+      topForksToProfile.map(async (fork: any) => {
+        try {
+          const username = fork.owner?.login;
+          if (!username) return fork;
+          
+          const profile = await runGhApi(`users/${username}`);
+          return {
+            ...fork,
+            owner: {
+              ...fork.owner,
+              followers: profile.followers ?? 0,
+              public_repos: profile.public_repos ?? 0,
+              hasDetailedStats: true
+            }
+          };
+        } catch (err: any) {
+          console.error(`Failed to profile forker ${fork.owner?.login}:`, err.message);
+          return fork;
+        }
+      })
+    );
+
+    const finalForks = [
+      ...detailedForks,
+      ...forks.slice(5)
+    ];
+
     const summary = {
       views: viewsData.status === 'fulfilled' ? viewsData.value : { count: 0, uniques: 0, views: [] },
       clones: clonesData.status === 'fulfilled' ? clonesData.value : { count: 0, uniques: 0, clones: [] },
@@ -211,6 +248,7 @@ app.get('/api/repos/:owner/:repo/summary', async (req, res) => {
       paths: pathsData.status === 'fulfilled' ? pathsData.value : [],
       releases: releasesData.status === 'fulfilled' ? releasesData.value : [],
       stargazers: finalStargazers,
+      forks: finalForks,
       fetchedAt: now
     };
 

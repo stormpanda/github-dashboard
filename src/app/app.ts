@@ -22,6 +22,7 @@ export class App implements OnInit {
   protected readonly summary = signal<RepoSummary | null>(null);
   protected readonly loadingSummary = signal<boolean>(false);
   protected readonly summaryError = signal<string | null>(null);
+  protected readonly activeTab = signal<'stargazers' | 'forks'>('stargazers');
 
   // Derived metrics from summary data
   protected readonly totalViews = computed(() => this.summary()?.views.count ?? 0);
@@ -49,6 +50,9 @@ export class App implements OnInit {
 
   // Stargazers log
   protected readonly stargazersList = computed(() => this.summary()?.stargazers ?? []);
+
+  // Forks log
+  protected readonly forksList = computed(() => this.summary()?.forks ?? []);
 
   // --- CHART COMPUTATIONS (Phase 2 Native SVG Charts) ---
 
@@ -205,6 +209,7 @@ export class App implements OnInit {
    */
   protected selectRepo(repo: Repository): void {
     this.selectedRepo.set(repo);
+    this.activeTab.set('stargazers');
     this.fetchSummary(repo);
   }
 

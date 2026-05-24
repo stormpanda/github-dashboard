@@ -85,6 +85,24 @@ export interface Stargazer {
   user: StargazerUser;
 }
 
+export interface ForkUser {
+  login: string;
+  avatar_url: string;
+  html_url: string;
+  followers?: number;
+  public_repos?: number;
+  hasDetailedStats?: boolean;
+}
+
+export interface Fork {
+  id: number;
+  name: string;
+  full_name: string;
+  html_url: string;
+  created_at: string;
+  owner: ForkUser;
+}
+
 export interface RepoSummary {
   views: TrafficViewsSummary;
   clones: TrafficClonesSummary;
@@ -92,6 +110,7 @@ export interface RepoSummary {
   paths: PopularPath[];
   releases: Release[];
   stargazers: Stargazer[];
+  forks: Fork[];
   fetchedAt: number;
 }
 
