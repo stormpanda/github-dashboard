@@ -95,7 +95,7 @@ export interface ForkUser {
 }
 
 export interface Fork {
-  id: number;
+  id: number | string;
   name: string;
   full_name: string;
   html_url: string;

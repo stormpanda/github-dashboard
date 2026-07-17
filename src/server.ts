@@ -65,6 +65,31 @@ async function runGhApi(endpoint: string, headers: string[] = []): Promise<any> 
   }
 }
 
+// GitHub GraphQL execution helper
+async function runGhGraphql(query: string, variables: Record<string, string>): Promise<any> {
+  const token = process.env['GITHUB_TOKEN'];
+  const env = { ...process.env };
+  if (token) {
+    env['GITHUB_TOKEN'] = token;
+  }
+
+  const args: string[] = [];
+  args.push(`-f query="${query.replace(/"/g, '\\"').replace(/\$/g, '\\$')}"`);
+  
+  for (const [key, value] of Object.entries(variables)) {
+    args.push(`-f "${key}=${value.replace(/"/g, '\\"')}"`);
+  }
+
+  const cmd = `gh api graphql ${args.join(' ')}`;
+  try {
+    const { stdout } = await execAsync(cmd, { env, maxBuffer: 10 * 1024 * 1024 });
+    return JSON.parse(stdout);
+  } catch (error: any) {
+    console.error(`GitHub GraphQL API error:`, error.message);
+    throw error;
+  }
+}
+
 // 1. GET /api/repos - Fetches configured repository lists & metadata
 app.get('/api/repos', async (req, res) => {
   const rawRepos = process.env['GITHUB_REPOS'] || '';
@@ -154,92 +179,98 @@ app.get('/api/repos/:owner/:repo/summary', async (req, res) => {
   }
 
   try {
-    const [viewsData, clonesData, referrersData, pathsData, releasesData, stargazersData, forksData] = await Promise.allSettled([
+    const graphqlQuery = `
+      query($owner: String!, $name: String!) {
+        repository(owner: $owner, name: $name) {
+          stargazers(first: 100, orderBy: {field: STARRED_AT, direction: DESC}) {
+            edges {
+              starredAt
+              node {
+                login
+                avatarUrl
+                url
+                followers {
+                  totalCount
+                }
+                repositories(privacy: PUBLIC) {
+                  totalCount
+                }
+              }
+            }
+          }
+          forks(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {
+            nodes {
+              id
+              name
+              nameWithOwner
+              url
+              createdAt
+              owner {
+                login
+                avatarUrl
+                url
+                repositories(privacy: PUBLIC) {
+                  totalCount
+                }
+                ... on User {
+                  followers {
+                    totalCount
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    `;
+
+    const [viewsData, clonesData, referrersData, pathsData, releasesData, gqlData] = await Promise.allSettled([
       runGhApi(`repos/${repoStr}/traffic/views`),
       runGhApi(`repos/${repoStr}/traffic/clones`),
       runGhApi(`repos/${repoStr}/traffic/popular/referrers`),
       runGhApi(`repos/${repoStr}/traffic/popular/paths`),
       runGhApi(`repos/${repoStr}/releases`),
-      runGhApi(`repos/${repoStr}/stargazers`, ['Accept: application/vnd.github.v3.star+json']),
-      runGhApi(`repos/${repoStr}/forks`)
+      runGhGraphql(graphqlQuery, { owner, name: repo })
     ]);
 
-    // Parse stargazers
-    let stargazers = stargazersData.status === 'fulfilled' ? stargazersData.value : [];
-    
-    // Sort chronological descending (newest stargazer first)
-    if (Array.isArray(stargazers)) {
-      stargazers = [...stargazers].reverse();
-    } else {
-      stargazers = [];
+    let stargazers: any[] = [];
+    let forks: any[] = [];
+
+    if (gqlData.status === 'fulfilled' && gqlData.value && gqlData.value.data && gqlData.value.data.repository) {
+      const repoData = gqlData.value.data.repository;
+      
+      if (repoData.stargazers && Array.isArray(repoData.stargazers.edges)) {
+        stargazers = repoData.stargazers.edges.map((edge: any) => ({
+          starred_at: edge.starredAt,
+          user: {
+            login: edge.node.login,
+            avatar_url: edge.node.avatarUrl,
+            html_url: edge.node.url,
+            followers: edge.node.followers?.totalCount ?? 0,
+            public_repos: edge.node.repositories?.totalCount ?? 0,
+            hasDetailedStats: true
+          }
+        }));
+      }
+
+      if (repoData.forks && Array.isArray(repoData.forks.nodes)) {
+        forks = repoData.forks.nodes.map((node: any) => ({
+          id: node.id,
+          name: node.name,
+          full_name: node.nameWithOwner,
+          html_url: node.url,
+          created_at: node.createdAt,
+          owner: {
+            login: node.owner?.login ?? '',
+            avatar_url: node.owner?.avatarUrl ?? '',
+            html_url: node.owner?.url ?? '',
+            followers: node.owner?.followers?.totalCount ?? 0,
+            public_repos: node.owner?.repositories?.totalCount ?? 0,
+            hasDetailedStats: true
+          }
+        }));
+      }
     }
-
-    // Dynamic Rate-Limit Safe Profiling: Fetch follower/repo data only for the 5 most recent stargazers
-    const topStargazersToProfile = stargazers.slice(0, 5);
-    const detailedStargazers = await Promise.all(
-      topStargazersToProfile.map(async (star: any) => {
-        try {
-          const username = star.user?.login;
-          if (!username) return star;
-          
-          const profile = await runGhApi(`users/${username}`);
-          return {
-            ...star,
-            user: {
-              ...star.user,
-              followers: profile.followers ?? 0,
-              public_repos: profile.public_repos ?? 0,
-              hasDetailedStats: true
-            }
-          };
-        } catch (err: any) {
-          console.error(`Failed to profile stargazer ${star.user?.login}:`, err.message);
-          return star;
-        }
-      })
-    );
-
-    // Reconstruct list: profiled stargazers first, then the remaining list
-    const finalStargazers = [
-      ...detailedStargazers,
-      ...stargazers.slice(5)
-    ];
-
-    // Parse forks
-    let forks = forksData.status === 'fulfilled' ? forksData.value : [];
-    if (!Array.isArray(forks)) {
-      forks = [];
-    }
-
-    // Dynamic Rate-Limit Safe Profiling: Fetch follower/repo data only for the 5 most recent forks
-    const topForksToProfile = forks.slice(0, 5);
-    const detailedForks = await Promise.all(
-      topForksToProfile.map(async (fork: any) => {
-        try {
-          const username = fork.owner?.login;
-          if (!username) return fork;
-          
-          const profile = await runGhApi(`users/${username}`);
-          return {
-            ...fork,
-            owner: {
-              ...fork.owner,
-              followers: profile.followers ?? 0,
-              public_repos: profile.public_repos ?? 0,
-              hasDetailedStats: true
-            }
-          };
-        } catch (err: any) {
-          console.error(`Failed to profile forker ${fork.owner?.login}:`, err.message);
-          return fork;
-        }
-      })
-    );
-
-    const finalForks = [
-      ...detailedForks,
-      ...forks.slice(5)
-    ];
 
     const summary = {
       views: viewsData.status === 'fulfilled' ? viewsData.value : { count: 0, uniques: 0, views: [] },
@@ -247,8 +278,8 @@ app.get('/api/repos/:owner/:repo/summary', async (req, res) => {
       referrers: referrersData.status === 'fulfilled' ? referrersData.value : [],
       paths: pathsData.status === 'fulfilled' ? pathsData.value : [],
       releases: releasesData.status === 'fulfilled' ? releasesData.value : [],
-      stargazers: finalStargazers,
-      forks: finalForks,
+      stargazers,
+      forks,
       fetchedAt: now
     };
 
