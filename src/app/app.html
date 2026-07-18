@@ -1,66 +1,10 @@
 <div class="dashboard-container">
-  <!-- Left Sidebar -->
-  <aside class="sidebar">
-    <div class="sidebar-header">
-      <div class="logo">
-        <span class="logo-icon">📊</span>
-        <h1>GitPulse</h1>
-      </div>
-      <p class="logo-subtitle">Marketing Analytics</p>
-    </div>
-
-    <!-- Repository Selector List -->
-    <nav class="repo-nav">
-      <div class="nav-title">Tracked Repositories</div>
-      
-      @if (globalLoading()) {
-        <div class="sidebar-loading">
-          <div class="spinner"></div>
-          <span>Loading configs...</span>
-        </div>
-      } @else if (globalError()) {
-        <div class="sidebar-error">
-          <p class="error-msg">{{ globalError() }}</p>
-          <button id="retry-configs-btn" (click)="githubService.loadRepos()" class="retry-btn">Retry Setup</button>
-        </div>
-      } @else {
-        <ul class="repo-list">
-          @for (repo of repos(); track repo.id) {
-            <li class="repo-item" 
-                [class.active]="selectedRepo()?.id === repo.id" 
-                (click)="selectRepo(repo)"
-                [attr.id]="'repo-select-' + repo.name">
-              <div class="repo-avatar-wrap">
-                <img [src]="repo.avatarUrl" [alt]="repo.name" class="repo-avatar" />
-              </div>
-              <div class="repo-info">
-                <span class="repo-name">{{ repo.name }}</span>
-                <span class="repo-owner">{{ repo.owner }}</span>
-              </div>
-              <div class="repo-meta-quick">
-                <span class="meta-star">⭐ {{ repo.starsCount }}</span>
-              </div>
-            </li>
-          } @empty {
-            <li class="empty-state">No repositories configured. Add them to `.env`.</li>
-          }
-        </ul>
-      }
-    </nav>
-
-    <!-- Sidebar Footer -->
-    <footer class="sidebar-footer">
-      <div class="auth-status">
-        <span class="status-dot online"></span>
-        <span class="status-text">Connected to local `gh`</span>
-      </div>
-      <p class="copyright">v1.1.0 · DevRel Expansion</p>
-    </footer>
-  </aside>
+  <!-- Left Sidebar Subcomponent -->
+  <app-sidebar />
 
   <!-- Main Content Area -->
   <main class="main-content">
-    @if (selectedRepo(); as active) {
+    @if (githubService.selectedRepo(); as active) {
       <!-- Main Content Header -->
       <header class="content-header">
         <div class="repo-details">
@@ -75,10 +19,10 @@
 
         <div class="header-actions">
           <button id="refresh-dashboard-btn" 
-                  (click)="refreshActive()" 
-                  [disabled]="loadingSummary()" 
+                  (click)="githubService.refreshActive()" 
+                  [disabled]="githubService.loadingSummary()" 
                   class="action-btn refresh-btn">
-            @if (loadingSummary()) {
+            @if (githubService.loadingSummary()) {
               <span class="spinner mini"></span>
               <span>Syncing...</span>
             } @else {
@@ -89,454 +33,44 @@
       </header>
 
       <!-- Main Dashboard Body -->
-      @if (loadingSummary() && !summary()) {
+      @if (githubService.loadingSummary() && !githubService.summary()) {
         <div class="dashboard-loading-state">
           <div class="spinner large"></div>
           <h3>Running Marketing Profilers</h3>
-          <p>Requesting Views, Clones, Referrers, and Stargazer followers via local `gh` CLI...</p>
+          <p>Requesting Views, Clones, Referrers, and Stargazer followers via local \`gh\` CLI...</p>
         </div>
-      } @else if (summaryError()) {
+      } @else if (githubService.summaryError()) {
         <div class="dashboard-error-state">
           <span class="error-icon">⚠️</span>
           <h3>Analytics Retrieval Failed</h3>
-          <p>{{ summaryError() }}</p>
-          <button id="retry-metrics-btn" (click)="refreshActive()" class="action-btn retry-btn">Retry CLI Fetch</button>
+          <p>{{ githubService.summaryError() }}</p>
+          <button id="retry-metrics-btn" (click)="githubService.refreshActive()" class="action-btn retry-btn">Retry CLI Fetch</button>
         </div>
-      } @else if (summary(); as data) {
+      } @else if (githubService.summary()) {
         <!-- Dashboard Content Grid -->
         <div class="dashboard-grid">
           
-          <!-- KPI Metrics Row -->
-          <div class="metrics-row">
-            <!-- Card 1: Page Views -->
-            <div class="metric-card views">
-              <div class="metric-header">
-                <span class="metric-title">14-Day Page Views</span>
-                <span class="metric-icon">👁️</span>
-              </div>
-              <div class="metric-value">{{ totalViews() | number }}</div>
-              <p class="metric-sub"><b>{{ uniqueVisitors() | number }}</b> unique visitors</p>
-            </div>
+          <!-- KPI Metrics Row Subcomponent -->
+          <app-kpi-cards />
 
-            <!-- Card 2: Code Clones -->
-            <div class="metric-card uniques">
-              <div class="metric-header">
-                <span class="metric-title">14-Day Code Clones</span>
-                <span class="metric-icon">📥</span>
-              </div>
-              <div class="metric-value">{{ totalClones() | number }}</div>
-              <p class="metric-sub"><b>{{ uniqueCloners() | number }}</b> unique developers</p>
-            </div>
-
-            <!-- Card 3: Asset Downloads -->
-            <div class="metric-card downloads">
-              <div class="metric-header">
-                <span class="metric-title">Asset Downloads</span>
-                <span class="metric-icon">📦</span>
-              </div>
-              <div class="metric-value">{{ totalDownloads() | number }}</div>
-              <p class="metric-sub">Release artifact file downloads</p>
-            </div>
-
-            <!-- Card 4: Stars Count -->
-            <div class="metric-card stars">
-              <div class="metric-header">
-                <span class="metric-title">GitHub Stars</span>
-                <span class="metric-icon">⭐</span>
-              </div>
-              <div class="metric-value">{{ starsCount() | number }}</div>
-              <p class="metric-sub">Cumulative repository stars</p>
-            </div>
+          <!-- SVG Visual Charts Subcomponents -->
+          <div class="grid-section split-2">
+            <app-engagement-chart />
+            <app-star-chart />
           </div>
 
-          <!-- Section 1: Interactive SVG Visual Charts -->
+          <!-- Popular Content & Traffic Sources Subcomponent -->
+          <app-traffic-tables />
+
+          <!-- Releases & Stargazers Tabbed Log Subcomponents -->
           <div class="grid-section split-2">
-            <!-- 1. Daily Engagement Chart (Views vs Clones overlay) -->
-            <div class="data-card svg-chart-card">
-              <div class="card-header">
-                <div class="card-title-group">
-                  <h3>Daily Visitor Engagement</h3>
-                  <p class="card-subtitle">Views (Blue) vs. Clones (Emerald) over 14 days</p>
-                </div>
-                <span class="badge">Engagement Trends</span>
-              </div>
-              <div class="chart-container">
-                @if (dailyTrends().length > 1) {
-                  <div class="svg-chart-wrap">
-                    <svg viewBox="0 0 600 180" class="svg-chart" preserveAspectRatio="none">
-                      <defs>
-                        <linearGradient id="viewsGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.18"/>
-                          <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.00"/>
-                        </linearGradient>
-                        <linearGradient id="clonesGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stop-color="#10b981" stop-opacity="0.18"/>
-                          <stop offset="100%" stop-color="#10b981" stop-opacity="0.00"/>
-                        </linearGradient>
-                      </defs>
-                      <!-- Horizontal Grid lines -->
-                      <line x1="0" y1="15" x2="600" y2="15" stroke="rgba(255,255,255,0.03)" stroke-width="1" />
-                      <line x1="0" y1="85" x2="600" y2="85" stroke="rgba(255,255,255,0.03)" stroke-width="1" />
-                      <line x1="0" y1="155" x2="600" y2="155" stroke="rgba(255,255,255,0.03)" stroke-width="1" />
-                      
-                      <!-- Views Area & Line -->
-                      <path [attr.d]="engagementChartPaths().viewsArea" fill="url(#viewsGrad)" />
-                      <path [attr.d]="engagementChartPaths().viewsLine" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" />
-                      
-                      <!-- Clones Area & Line -->
-                      <path [attr.d]="engagementChartPaths().clonesArea" fill="url(#clonesGrad)" />
-                      <path [attr.d]="engagementChartPaths().clonesLine" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" />
-                      
-                      <!-- Interactive Hover Circles -->
-                      @for (pt of engagementChartPaths().points; track pt.date) {
-                        <circle [attr.cx]="pt.x" [attr.cy]="pt.yViews" r="4" fill="#3b82f6" stroke="#fff" stroke-width="1.5" class="chart-point" />
-                        <circle [attr.cx]="pt.x" [attr.cy]="pt.yClones" r="4" fill="#10b981" stroke="#fff" stroke-width="1.5" class="chart-point" />
-                      }
-                    </svg>
-
-                    <!-- Interactive X-Axis Labels -->
-                    <div class="chart-x-axis">
-                      @for (pt of engagementChartPaths().points; track pt.date; let isLast = $last, isFirst = $first) {
-                        @if (isFirst || isLast || $index === 4 || $index === 9) {
-                          <span class="axis-label" [style.left.%]="(pt.x / 600) * 100">{{ pt.date | date:'MM/dd' }}</span>
-                        }
-                      }
-                    </div>
-                  </div>
-                  <div class="chart-legend">
-                    <div class="legend-item"><span class="legend-dot views-dot"></span> Page Views</div>
-                    <div class="legend-item"><span class="legend-dot clones-dot"></span> Code Clones</div>
-                  </div>
-                } @else {
-                  <div class="empty-state-placeholder">
-                    <span>Not enough data points to plot engagement history.</span>
-                  </div>
-                }
-              </div>
-            </div>
-
-            <!-- 2. Stars Traction Velocity Area Chart -->
-            <div class="data-card svg-chart-card">
-              <div class="card-header">
-                <div class="card-title-group">
-                  <h3>Cumulative Star Growth</h3>
-                  <p class="card-subtitle">Repository popularity trajectory over stargazer timelines</p>
-                </div>
-                <span class="badge">Star Growth Velocity</span>
-              </div>
-              <div class="chart-container">
-                @if (starGrowthHistory().length > 1) {
-                  <div class="svg-chart-wrap">
-                    <svg viewBox="0 0 600 180" class="svg-chart" preserveAspectRatio="none">
-                      <defs>
-                        <linearGradient id="starsGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.25"/>
-                          <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.00"/>
-                        </linearGradient>
-                      </defs>
-                      <!-- Horizontal Grid lines -->
-                      <line x1="0" y1="15" x2="600" y2="15" stroke="rgba(255,255,255,0.03)" stroke-width="1" />
-                      <line x1="0" y1="85" x2="600" y2="85" stroke="rgba(255,255,255,0.03)" stroke-width="1" />
-                      <line x1="0" y1="155" x2="600" y2="155" stroke="rgba(255,255,255,0.03)" stroke-width="1" />
-                      
-                      <!-- Stars Area & Line -->
-                      <path [attr.d]="starChartPaths().area" fill="url(#starsGrad)" />
-                      <path [attr.d]="starChartPaths().line" fill="none" stroke="#8b5cf6" stroke-width="2.5" stroke-linecap="round" />
-                      
-                      <!-- Interactive Points -->
-                      @for (pt of starChartPaths().points; track pt.date) {
-                        <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="4" fill="#8b5cf6" stroke="#fff" stroke-width="1.5" class="chart-point" />
-                      }
-                    </svg>
-
-                    <!-- Interactive X-Axis Labels -->
-                    <div class="chart-x-axis">
-                      @for (pt of starChartPaths().points; track pt.date; let isLast = $last, isFirst = $first) {
-                        @if (isFirst || isLast || $index === Math.floor(starChartPaths().points.length / 2)) {
-                          <span class="axis-label" [style.left.%]="(pt.x / 600) * 100">{{ pt.date | date:'MM/dd' }}</span>
-                        }
-                      }
-                    </div>
-                  </div>
-                  <div class="chart-legend">
-                    <div class="legend-item"><span class="legend-dot stars-dot"></span> Cumulative Stars</div>
-                  </div>
-                } @else {
-                  <div class="empty-state-placeholder">
-                    <span>Not enough stargazer dates to plot star growth curve.</span>
-                  </div>
-                }
-              </div>
-            </div>
-          </div>
-
-          <!-- Section 2: Popular Content Paths & Top Traffic Referrers -->
-          <div class="grid-section split-2">
-            <!-- Popular Paths Card -->
-            <div class="data-card paths-card">
-              <div class="card-header">
-                <h3>Popular Content & File Visits</h3>
-                <span class="badge">Top 10 Paths</span>
-              </div>
-              <div class="table-container">
-                <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th>File / Page Path</th>
-                      <th class="text-right">Views</th>
-                      <th class="text-right">Uniques</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (item of data.paths; track item.path) {
-                      <tr>
-                        <td class="file-path-cell" [attr.title]="item.path">
-                          <span class="file-icon">📄</span>
-                          <span class="file-path">{{ item.path }}</span>
-                        </td>
-                        <td class="text-right num-highlight">{{ item.count | number }}</td>
-                        <td class="text-right num-highlight-secondary">{{ item.uniques | number }}</td>
-                      </tr>
-                    } @empty {
-                      <tr>
-                        <td colspan="3" class="table-empty">No file visits tracked in the last 14 days.</td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <!-- Top Traffic Referral Sources -->
-            <div class="data-card referrers-card">
-              <div class="card-header">
-                <h3>Top Traffic Referral Sources</h3>
-                <span class="badge">Marketing Referrers</span>
-              </div>
-              <div class="table-container">
-                <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th>Referrer Domain</th>
-                      <th class="text-right">Views</th>
-                      <th class="text-right">Uniques</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (item of referrers(); track item.referrer) {
-                      <tr>
-                        <td class="file-path-cell">
-                          <span class="referrer-icon">🔗</span>
-                          <span class="file-path font-bold">{{ item.referrer }}</span>
-                        </td>
-                        <td class="text-right num-highlight-blue">{{ item.count | number }}</td>
-                        <td class="text-right num-highlight-secondary">{{ item.uniques | number }}</td>
-                      </tr>
-                    } @empty {
-                      <tr>
-                        <td colspan="3" class="table-empty">No referral domains logged in the last 14 days.</td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-          <!-- Section 3: Releases & Stargazers -->
-          <div class="grid-section split-2">
-            <!-- Release Asset Downloads Card -->
-            <div class="data-card releases-card">
-              <div class="card-header">
-                <h3>Release Downloads Breakdown</h3>
-                <span class="badge">Official Artifacts</span>
-              </div>
-              <div class="releases-list">
-                @for (release of data.releases; track release.id) {
-                  <div class="release-item">
-                    <div class="release-info-row">
-                      <div class="release-tag-group">
-                        <span class="release-badge">🏷️ {{ release.tag_name }}</span>
-                        <h4 class="release-title">{{ release.name || 'Release ' + release.tag_name }}</h4>
-                      </div>
-                      <span class="release-date">{{ release.published_at | date:'mediumDate' }}</span>
-                    </div>
-                    
-                    <ul class="asset-list">
-                      @for (asset of release.assets; track asset.browser_download_url) {
-                        <li class="asset-item">
-                          <div class="asset-name-group">
-                            <span class="asset-icon">💾</span>
-                            <a [href]="asset.browser_download_url" target="_blank" class="asset-name" rel="noopener">
-                              {{ asset.name }}
-                            </a>
-                            <span class="asset-size">({{ formatBytes(asset.size) }})</span>
-                          </div>
-                          <div class="asset-downloads">
-                            <span class="download-badge">⬇️ {{ asset.download_count | number }} downloads</span>
-                          </div>
-                        </li>
-                      } @empty {
-                        <li class="asset-empty">No assets compiled for this release (it may be source code only).</li>
-                      }
-                    </ul>
-                  </div>
-                } @empty {
-                  <div class="empty-state-placeholder">
-                    <span class="empty-icon">📦</span>
-                    <span>No releases found for this repository.</span>
-                  </div>
-                }
-              </div>
-            </div>
-
-            <!-- Stargazers & Forks Tabbed Log Card (with Influence Levels) -->
-            <div class="data-card stargazers-card tabbed-card">
-              <div class="card-header tabbed-header">
-                <div class="card-tabs">
-                  <button class="tab-btn" 
-                          [class.active]="activeTab() === 'stargazers'" 
-                          (click)="activeTab.set('stargazers')">
-                    ⭐ Stargazers
-                  </button>
-                  <button class="tab-btn" 
-                          [class.active]="activeTab() === 'forks'" 
-                          (click)="activeTab.set('forks')">
-                    🔱 Forks
-                  </button>
-                </div>
-                <span class="badge">
-                  @if (activeTab() === 'stargazers') {
-                    Advocate Followers
-                  } @else {
-                    Repository Copies
-                  }
-                </span>
-              </div>
-
-              @if (activeTab() === 'stargazers') {
-                <div class="stargazers-container">
-                  <div class="sort-bar">
-                    <span class="sort-label">Sort by:</span>
-                    <div class="sort-options">
-                      <button class="sort-btn" 
-                              [class.active]="stargazersSort() === 'date_desc'" 
-                              (click)="stargazersSort.set('date_desc')">
-                        📅 Newest
-                      </button>
-                      <button class="sort-btn" 
-                              [class.active]="stargazersSort() === 'date_asc'" 
-                              (click)="stargazersSort.set('date_asc')">
-                        📅 Oldest
-                      </button>
-                      <button class="sort-btn" 
-                              [class.active]="stargazersSort() === 'followers'" 
-                              (click)="stargazersSort.set('followers')">
-                        👥 Followers
-                      </button>
-                      <button class="sort-btn" 
-                              [class.active]="stargazersSort() === 'repos'" 
-                              (click)="stargazersSort.set('repos')">
-                        💻 Repositories
-                      </button>
-                    </div>
-                  </div>
-                  <div class="stargazers-grid">
-                    @for (star of stargazersList(); track star.user.login) {
-                      <a [href]="star.user.html_url" target="_blank" class="stargazer-item" [class.profiled]="star.user.hasDetailedStats" rel="noopener">
-                        <img [src]="star.user.avatar_url" [alt]="star.user.login" class="user-avatar" />
-                        <div class="user-info">
-                          <div class="user-name-row">
-                            <span class="user-name">{{ star.user.login }}</span>
-                            @if (getInfluenceLabel(star.user); as label) {
-                              <span class="influence-badge" [class]="label | lowercase">
-                                {{ label }}
-                              </span>
-                            }
-                          </div>
-                          
-                          @if (star.user.hasDetailedStats) {
-                            <div class="user-stats-row">
-                              <span class="stat-badge">👥 {{ star.user.followers | number }} followers</span>
-                              <span class="stat-badge">💻 {{ star.user.public_repos }} repos</span>
-                            </div>
-                          }
-                          <span class="starred-date">Starred {{ star.starred_at | date:'shortDate' }}</span>
-                        </div>
-                      </a>
-                    } @empty {
-                      <div class="empty-state-placeholder">
-                        <span class="empty-icon">⭐</span>
-                        <span>No stargazers logged yet. Be the first to star!</span>
-                      </div>
-                    }
-                  </div>
-                </div>
-              } @else {
-                <div class="stargazers-container">
-                  <div class="sort-bar">
-                    <span class="sort-label">Sort by:</span>
-                    <div class="sort-options">
-                      <button class="sort-btn" 
-                              [class.active]="forksSort() === 'date_desc'" 
-                              (click)="forksSort.set('date_desc')">
-                        📅 Newest
-                      </button>
-                      <button class="sort-btn" 
-                              [class.active]="forksSort() === 'date_asc'" 
-                              (click)="forksSort.set('date_asc')">
-                        📅 Oldest
-                      </button>
-                      <button class="sort-btn" 
-                              [class.active]="forksSort() === 'followers'" 
-                              (click)="forksSort.set('followers')">
-                        👥 Followers
-                      </button>
-                      <button class="sort-btn" 
-                              [class.active]="forksSort() === 'repos'" 
-                              (click)="forksSort.set('repos')">
-                        💻 Repositories
-                      </button>
-                    </div>
-                  </div>
-                  <div class="stargazers-grid">
-                    @for (fork of forksList(); track fork.id) {
-                      <a [href]="fork.html_url" target="_blank" class="stargazer-item" [class.profiled]="fork.owner.hasDetailedStats" rel="noopener">
-                        <img [src]="fork.owner.avatar_url" [alt]="fork.owner.login" class="user-avatar" />
-                        <div class="user-info">
-                          <div class="user-name-row">
-                            <span class="user-name">{{ fork.owner.login }}</span>
-                            @if (getInfluenceLabel(fork.owner); as label) {
-                              <span class="influence-badge" [class]="label | lowercase">
-                                {{ label }}
-                              </span>
-                            }
-                          </div>
-                          
-                          @if (fork.owner.hasDetailedStats) {
-                            <div class="user-stats-row">
-                              <span class="stat-badge">👥 {{ fork.owner.followers | number }} followers</span>
-                              <span class="stat-badge">💻 {{ fork.owner.public_repos }} repos</span>
-                            </div>
-                          }
-                          <span class="starred-date">Forked {{ fork.created_at | date:'shortDate' }}</span>
-                        </div>
-                      </a>
-                    } @empty {
-                      <div class="empty-state-placeholder">
-                        <span class="empty-icon">🔱</span>
-                        <span>No forks created yet. Be the first to fork/copy!</span>
-                      </div>
-                    }
-                  </div>
-                </div>
-              }
-            </div>
+            <app-releases-list />
+            <app-stargazers-list />
           </div>
 
           <!-- Bottom Footer Details -->
           <footer class="dashboard-bottom-info">
-            <span>Last synchronized: {{ data.fetchedAt | date:'medium' }}</span>
+            <span>Last synchronized: {{ githubService.summary()?.fetchedAt | date:'medium' }}</span>
             <span>· Data cached locally on server to avoid rate limits</span>
           </footer>
 

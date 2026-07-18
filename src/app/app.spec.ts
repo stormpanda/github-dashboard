@@ -11,6 +11,13 @@ describe('App', () => {
       repos: signal([]),
       loading: signal(false),
       error: signal(null),
+      selectedRepo: signal(null),
+      summary: signal(null),
+      loadingSummary: signal(false),
+      summaryError: signal(null),
+      activeTab: signal('stargazers'),
+      stargazersSort: signal('date_desc'),
+      forksSort: signal('date_desc'),
       loadRepos: () => {}
     };
 

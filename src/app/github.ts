@@ -1,4 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, inject, signal, effect } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, finalize, tap, throwError } from 'rxjs';
 
@@ -71,7 +71,7 @@ export interface Release {
   assets: ReleaseAsset[];
 }
 
-export interface StargazerUser {
+export interface GitHubUser {
   login: string;
   avatar_url: string;
   html_url: string;
@@ -82,16 +82,7 @@ export interface StargazerUser {
 
 export interface Stargazer {
   starred_at: string;
-  user: StargazerUser;
-}
-
-export interface ForkUser {
-  login: string;
-  avatar_url: string;
-  html_url: string;
-  followers?: number;
-  public_repos?: number;
-  hasDetailedStats?: boolean;
+  user: GitHubUser;
 }
 
 export interface Fork {
@@ -100,7 +91,7 @@ export interface Fork {
   full_name: string;
   html_url: string;
   created_at: string;
-  owner: ForkUser;
+  owner: GitHubUser;
 }
 
 export interface RepoSummary {
@@ -124,6 +115,25 @@ export class GithubService {
   readonly repos = signal<Repository[]>([]);
   readonly loading = signal<boolean>(false);
   readonly error = signal<string | null>(null);
+
+  // Active dashboard state signals
+  readonly selectedRepo = signal<Repository | null>(null);
+  readonly summary = signal<RepoSummary | null>(null);
+  readonly loadingSummary = signal<boolean>(false);
+  readonly summaryError = signal<string | null>(null);
+  readonly activeTab = signal<'stargazers' | 'forks'>('stargazers');
+  readonly stargazersSort = signal<'date_desc' | 'date_asc' | 'followers' | 'repos'>('date_desc');
+  readonly forksSort = signal<'date_desc' | 'date_asc' | 'followers' | 'repos'>('date_desc');
+
+  constructor() {
+    effect(() => {
+      const currentRepos = this.repos();
+      const selected = this.selectedRepo();
+      if (currentRepos.length > 0 && !selected) {
+        this.selectRepo(currentRepos[0]);
+      }
+    });
+  }
 
   /**
    * Load the list of configured repositories from the server .env
@@ -156,5 +166,45 @@ export class GithubService {
         return throwError(() => err);
       })
     );
+  }
+
+  /**
+   * Set active repository and trigger metrics retrieval
+   */
+  selectRepo(repo: Repository): void {
+    this.selectedRepo.set(repo);
+    this.activeTab.set('stargazers');
+    this.fetchSummary(repo);
+  }
+
+  /**
+   * Refresh metrics for the currently selected repository
+   */
+  refreshActive(): void {
+    const active = this.selectedRepo();
+    if (active) {
+      this.fetchSummary(active);
+    }
+  }
+
+  /**
+   * Fetch the summary metrics for a given repository
+   */
+  private fetchSummary(repo: Repository): void {
+    this.loadingSummary.set(true);
+    this.summaryError.set(null);
+
+    this.getRepoSummary(repo.owner, repo.name).subscribe({
+      next: (data) => {
+        this.summary.set(data);
+        this.loadingSummary.set(false);
+      },
+      error: (err) => {
+        console.error('Error fetching repository summary:', err);
+        const errMsg = err.error?.error || 'Failed to retrieve repository metrics. Please check your network and GITHUB_TOKEN credentials.';
+        this.summaryError.set(errMsg);
+        this.loadingSummary.set(false);
+      }
+    });
   }
 }

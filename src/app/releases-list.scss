@@ -1,0 +1,193 @@
+@use 'variables' as *;
+
+.data-card {
+  background: $bg-card;
+  border: 1px solid $border-color;
+  border-radius: 16px;
+  padding: 24px;
+  backdrop-filter: blur(15px);
+  display: flex;
+  flex-direction: column;
+  min-height: 380px;
+  animation: cardAppear 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+
+    h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .badge {
+      font-size: 11px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid $border-color;
+      padding: 3px 8px;
+      border-radius: 6px;
+      color: $text-secondary;
+      font-weight: 500;
+    }
+  }
+}
+
+.releases-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+  }
+}
+
+.release-item {
+  border: 1px solid $border-color;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.01);
+  padding: 16px;
+
+  .release-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .release-tag-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+
+    .release-badge {
+      font-size: 11px;
+      font-weight: 600;
+      color: #f59e0b;
+      background: rgba(245, 158, 11, 0.08);
+      border: 1px solid rgba(245, 158, 11, 0.15);
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+
+    .release-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  .release-date {
+    font-size: 11px;
+    color: $text-muted;
+  }
+}
+
+.asset-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  padding-top: 12px;
+
+  .asset-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    padding: 8px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.15);
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.25);
+      border-color: rgba(255, 255, 255, 0.04);
+    }
+  }
+
+  .asset-name-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+
+    .asset-name {
+      color: $accent-blue;
+      text-decoration: none;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+
+    .asset-size {
+      font-size: 11px;
+      color: $text-muted;
+    }
+  }
+
+  .download-badge {
+    font-size: 11px;
+    color: #e5e7eb;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 3px 8px;
+    border-radius: 6px;
+  }
+
+  .asset-empty {
+    font-size: 12px;
+    color: $text-muted;
+    text-align: center;
+    padding: 8px;
+    font-style: italic;
+  }
+}
+
+.empty-state-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  text-align: center;
+  color: $text-muted;
+  font-size: 13px;
+  padding: 32px;
+
+  .empty-icon {
+    font-size: 32px;
+    margin-bottom: 12px;
+  }
+}
+
+@keyframes cardAppear {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

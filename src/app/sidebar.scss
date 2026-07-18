@@ -1,0 +1,231 @@
+@use 'variables' as *;
+
+// Left Sidebar
+.sidebar {
+  width: 320px;
+  height: 100%;
+  background: $bg-sidebar;
+  border-right: 1px solid $border-color;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  backdrop-filter: blur(20px);
+  z-index: 10;
+
+  .sidebar-header {
+    padding: 32px 24px;
+    border-bottom: 1px solid $border-color;
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      .logo-icon {
+        font-size: 24px;
+      }
+
+      h1 {
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+        background: linear-gradient(135deg, #fff 0%, #a78bfa 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+    }
+
+    .logo-subtitle {
+      font-size: 12px;
+      color: $text-secondary;
+      margin-top: 4px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-weight: 500;
+    }
+  }
+}
+
+.repo-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 16px;
+
+  .nav-title {
+    font-size: 11px;
+    color: $text-muted;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    padding-left: 8px;
+  }
+
+  .sidebar-loading, .sidebar-error {
+    padding: 32px 16px;
+    text-align: center;
+    color: $text-secondary;
+    font-size: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .spinner {
+    width: 28px;
+    height: 28px;
+    border: 3px solid rgba(139, 92, 246, 0.1);
+    border-top: 3px solid $accent-purple;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  .retry-btn {
+    background: rgba(139, 92, 246, 0.15);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    color: #c084fc;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: rgba(139, 92, 246, 0.25);
+      border-color: rgba(139, 92, 246, 0.5);
+    }
+  }
+
+  .error-msg {
+    color: #f87171;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .repo-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .repo-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 12px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.03);
+      border-color: rgba(255, 255, 255, 0.04);
+      transform: translateX(4px);
+    }
+
+    &.active {
+      background: rgba(139, 92, 246, 0.08);
+      border-color: rgba(139, 92, 246, 0.2);
+
+      .repo-name {
+        color: #fff;
+        font-weight: 600;
+      }
+
+      .repo-avatar {
+        border-color: rgba(139, 92, 246, 0.4);
+      }
+    }
+
+    .repo-avatar-wrap {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .repo-avatar {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      transition: all 0.2s ease;
+    }
+
+    .repo-info {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-width: 0;
+
+      .repo-name {
+        font-size: 14px;
+        color: $text-primary;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .repo-owner {
+        font-size: 12px;
+        color: $text-secondary;
+      }
+    }
+
+    .repo-meta-quick {
+      font-size: 11px;
+      font-weight: 600;
+      color: #fbbf24;
+      background: rgba(251, 191, 36, 0.08);
+      padding: 3px 7px;
+      border-radius: 6px;
+      border: 1px solid rgba(251, 191, 36, 0.15);
+    }
+  }
+}
+
+.sidebar-footer {
+  padding: 24px;
+  border-top: 1px solid $border-color;
+
+  .auth-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: $text-secondary;
+    font-weight: 500;
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: $accent-emerald;
+      box-shadow: 0 0 8px $accent-emerald;
+
+      &.online {
+        background: $accent-emerald;
+        box-shadow: 0 0 8px $accent-emerald;
+      }
+    }
+  }
+
+  .copyright {
+    font-size: 10px;
+    color: $text-muted;
+    margin-top: 8px;
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
