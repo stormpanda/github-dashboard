@@ -220,21 +220,39 @@ app.get('/api/repos/:owner/:repo/summary', async (req, res) => {
               }
             }
           }
+          releases(first: 10, orderBy: {field: CREATED_AT, direction: DESC}) {
+            nodes {
+              id
+              url
+              tagName
+              name
+              createdAt
+              publishedAt
+              releaseAssets(first: 20) {
+                nodes {
+                  name
+                  downloadCount
+                  size
+                  downloadUrl
+                }
+              }
+            }
+          }
         }
       }
     `;
 
-    const [viewsData, clonesData, referrersData, pathsData, releasesData, gqlData] = await Promise.allSettled([
+    const [viewsData, clonesData, referrersData, pathsData, gqlData] = await Promise.allSettled([
       runGhApi(`repos/${repoStr}/traffic/views`),
       runGhApi(`repos/${repoStr}/traffic/clones`),
       runGhApi(`repos/${repoStr}/traffic/popular/referrers`),
       runGhApi(`repos/${repoStr}/traffic/popular/paths`),
-      runGhApi(`repos/${repoStr}/releases`),
       runGhGraphql(graphqlQuery, { owner, name: repo })
     ]);
 
     let stargazers: any[] = [];
     let forks: any[] = [];
+    let releases: any[] = [];
 
     if (gqlData.status === 'fulfilled' && gqlData.value && gqlData.value.data && gqlData.value.data.repository) {
       const repoData = gqlData.value.data.repository;
@@ -270,6 +288,26 @@ app.get('/api/repos/:owner/:repo/summary', async (req, res) => {
           }
         }));
       }
+
+      if (repoData.releases && Array.isArray(repoData.releases.nodes)) {
+        releases = repoData.releases.nodes.map((node: any) => ({
+          id: node.id,
+          url: node.url,
+          html_url: node.url,
+          tag_name: node.tagName,
+          name: node.name || node.tagName,
+          created_at: node.createdAt,
+          published_at: node.publishedAt,
+          assets: Array.isArray(node.releaseAssets?.nodes)
+            ? node.releaseAssets.nodes.map((asset: any) => ({
+                name: asset.name,
+                download_count: asset.downloadCount ?? 0,
+                size: asset.size ?? 0,
+                browser_download_url: asset.downloadUrl ?? ''
+              }))
+            : []
+        }));
+      }
     }
 
     const summary = {
@@ -277,7 +315,7 @@ app.get('/api/repos/:owner/:repo/summary', async (req, res) => {
       clones: clonesData.status === 'fulfilled' ? clonesData.value : { count: 0, uniques: 0, clones: [] },
       referrers: referrersData.status === 'fulfilled' ? referrersData.value : [],
       paths: pathsData.status === 'fulfilled' ? pathsData.value : [],
-      releases: releasesData.status === 'fulfilled' ? releasesData.value : [],
+      releases,
       stargazers,
       forks,
       fetchedAt: now

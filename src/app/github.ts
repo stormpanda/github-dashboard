@@ -63,7 +63,7 @@ export interface ReleaseAsset {
 export interface Release {
   url: string;
   html_url: string;
-  id: number;
+  id: number | string;
   tag_name: string;
   name: string;
   created_at: string;
