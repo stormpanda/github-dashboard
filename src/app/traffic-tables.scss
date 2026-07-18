@@ -11,15 +11,23 @@
 }
 
 .data-card {
-  background: $bg-card;
-  border: 1px solid $border-color;
+  background: $bg-glass;
+  border: 1px solid $border-glass;
   border-radius: 16px;
   padding: 24px;
-  backdrop-filter: blur(15px);
+  backdrop-filter: $blur-glass;
+  -webkit-backdrop-filter: $blur-glass;
   display: flex;
   flex-direction: column;
   min-height: 380px;
   animation: cardAppear 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  box-shadow: $shadow-glass;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+
+  &:hover {
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+  }
 
   .card-header {
     display: flex;
@@ -36,7 +44,7 @@
     .badge {
       font-size: 11px;
       background: rgba(255, 255, 255, 0.05);
-      border: 1px solid $border-color;
+      border: 1px solid $border-glass;
       padding: 3px 8px;
       border-radius: 6px;
       color: $text-secondary;
@@ -49,15 +57,20 @@
   flex: 1;
   overflow-y: auto;
   border-radius: 12px;
-  border: 1px solid $border-color;
-  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid $border-glass;
+  background: rgba(0, 0, 0, 0.22);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.2);
 
   &::-webkit-scrollbar {
     width: 6px;
   }
   &::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.08);
     border-radius: 3px;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.15);
   }
 }
 
@@ -68,8 +81,8 @@
   text-align: left;
 
   thead {
-    background: rgba(255, 255, 255, 0.02);
-    border-bottom: 1px solid $border-color;
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid $border-glass;
     
     th {
       padding: 12px 16px;
@@ -83,7 +96,7 @@
 
   tbody {
     tr {
-      border-bottom: 1px solid $border-color;
+      border-bottom: 1px solid $border-glass;
       transition: background 0.15s ease;
 
       &:last-child {
@@ -91,7 +104,7 @@
       }
 
       &:hover {
-        background: rgba(255, 255, 255, 0.02);
+        background: rgba(255, 255, 255, 0.04);
       }
     }
 

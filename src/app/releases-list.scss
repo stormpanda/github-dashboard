@@ -1,15 +1,23 @@
 @use 'variables' as *;
 
 .data-card {
-  background: $bg-card;
-  border: 1px solid $border-color;
+  background: $bg-glass;
+  border: 1px solid $border-glass;
   border-radius: 16px;
   padding: 24px;
-  backdrop-filter: blur(15px);
+  backdrop-filter: $blur-glass;
+  -webkit-backdrop-filter: $blur-glass;
   display: flex;
   flex-direction: column;
   min-height: 380px;
   animation: cardAppear 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  box-shadow: $shadow-glass;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+
+  &:hover {
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+  }
 
   .card-header {
     display: flex;
@@ -26,7 +34,7 @@
     .badge {
       font-size: 11px;
       background: rgba(255, 255, 255, 0.05);
-      border: 1px solid $border-color;
+      border: 1px solid $border-glass;
       padding: 3px 8px;
       border-radius: 6px;
       color: $text-secondary;
@@ -52,10 +60,17 @@
 }
 
 .release-item {
-  border: 1px solid $border-color;
+  border: 1px solid $border-glass;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.01);
+  background: rgba(255, 255, 255, 0.02);
   padding: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
 
   .release-info-row {
     display: flex;
@@ -109,15 +124,15 @@
     justify-content: space-between;
     align-items: center;
     font-size: 13px;
-    padding: 8px;
+    padding: 8px 12px;
     border-radius: 8px;
-    background: rgba(0, 0, 0, 0.15);
-    border: 1px solid transparent;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.03);
     transition: all 0.2s ease;
 
     &:hover {
-      background: rgba(0, 0, 0, 0.25);
-      border-color: rgba(255, 255, 255, 0.04);
+      background: rgba(0, 0, 0, 0.3);
+      border-color: rgba(255, 255, 255, 0.06);
     }
   }
 

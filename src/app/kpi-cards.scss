@@ -15,19 +15,21 @@
 }
 
 .metric-card {
-  background: $bg-card;
-  border: 1px solid $border-color;
+  background: $bg-glass;
+  border: 1px solid $border-glass;
   border-radius: 16px;
   padding: 24px;
-  backdrop-filter: blur(15px);
+  backdrop-filter: $blur-glass;
+  -webkit-backdrop-filter: $blur-glass;
   position: relative;
   overflow: hidden;
   animation: cardAppear 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: $shadow-glass;
 
   &:hover {
-    transform: translateY(-4px);
-    border-color: $border-hover;
+    transform: translateY(-6px);
+    border-color: $border-glass-light;
   }
 
   &::before {
@@ -37,6 +39,7 @@
     left: 0;
     width: 4px;
     height: 100%;
+    opacity: 0.85;
   }
 
   .metric-header {
@@ -78,20 +81,32 @@
 
   // Card themes
   &.views {
-    &:hover { box-shadow: 0 8px 30px rgba(59, 130, 246, 0.08); }
-    &::before { background: $accent-blue; }
+    &:hover {
+      box-shadow: 0 12px 30px rgba(59, 130, 246, 0.16), $shadow-glass;
+      border-color: rgba(59, 130, 246, 0.35);
+    }
+    &::before { background: linear-gradient(to bottom, $accent-blue, #60a5fa); }
   }
   &.uniques {
-    &:hover { box-shadow: 0 8px 30px rgba(16, 185, 129, 0.08); }
-    &::before { background: $accent-emerald; }
+    &:hover {
+      box-shadow: 0 12px 30px rgba(16, 185, 129, 0.16), $shadow-glass;
+      border-color: rgba(16, 185, 129, 0.35);
+    }
+    &::before { background: linear-gradient(to bottom, $accent-emerald, #34d399); }
   }
   &.downloads {
-    &:hover { box-shadow: 0 8px 30px rgba(245, 158, 11, 0.08); }
-    &::before { background: $accent-orange; }
+    &:hover {
+      box-shadow: 0 12px 30px rgba(245, 158, 11, 0.16), $shadow-glass;
+      border-color: rgba(245, 158, 11, 0.35);
+    }
+    &::before { background: linear-gradient(to bottom, $accent-orange, #fbbf24); }
   }
   &.stars {
-    &:hover { box-shadow: 0 8px 30px rgba(139, 92, 246, 0.08); }
-    &::before { background: $accent-purple; }
+    &:hover {
+      box-shadow: 0 12px 30px rgba(139, 92, 246, 0.16), $shadow-glass;
+      border-color: rgba(139, 92, 246, 0.35);
+    }
+    &::before { background: linear-gradient(to bottom, $accent-purple, #c084fc); }
   }
 }
 
