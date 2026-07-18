@@ -109,41 +109,69 @@ app.get('/api/repos', async (req, res) => {
   }
 
   try {
-    const results = await Promise.all(
-      repos.map(async (repoStr) => {
-        try {
-          const meta = await runGhApi(`repos/${repoStr}`);
-          return {
-            id: meta.id,
-            owner: meta.owner.login,
-            name: meta.name,
-            fullName: meta.full_name,
-            description: meta.description,
-            starsCount: meta.stargazers_count,
-            forksCount: meta.forks_count,
-            openIssuesCount: meta.open_issues_count,
-            avatarUrl: meta.owner.avatar_url,
-            htmlUrl: meta.html_url
-          };
-        } catch (err: any) {
-          console.error(`Failed to fetch metadata for ${repoStr}:`, err.message);
-          const [owner, name] = repoStr.split('/');
-          return {
-            id: Math.random(),
-            owner: owner || 'unknown',
-            name: name || repoStr,
-            fullName: repoStr,
-            description: 'Failed to fetch repository metadata. Please verify your credentials and network connection.',
-            starsCount: 0,
-            forksCount: 0,
-            openIssuesCount: 0,
-            avatarUrl: 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png',
-            htmlUrl: `https://github.com/${repoStr}`,
-            error: true
-          };
+    const repoQueries = repos.map((repoStr, index) => {
+      const [owner, name] = repoStr.split('/');
+      return `
+        repo_${index}: repository(owner: "${owner}", name: "${name}") {
+          id
+          name
+          description
+          url
+          stargazerCount
+          forkCount
+          issues(states: OPEN) {
+            totalCount
+          }
+          owner {
+            login
+            avatarUrl
+          }
         }
-      })
-    );
+      `;
+    }).join('\n');
+
+    const query = `
+      query {
+        ${repoQueries}
+      }
+    `;
+
+    const gqlResult = await runGhGraphql(query, {});
+
+    const results = repos.map((repoStr, index) => {
+      const alias = `repo_${index}`;
+      const repoData = gqlResult?.data?.[alias];
+      const [owner, name] = repoStr.split('/');
+
+      if (!repoData) {
+        return {
+          id: `err_${index}_${Math.random()}`,
+          owner: owner || 'unknown',
+          name: name || repoStr,
+          fullName: repoStr,
+          description: 'Failed to fetch repository metadata. Please verify your credentials and network connection.',
+          starsCount: 0,
+          forksCount: 0,
+          openIssuesCount: 0,
+          avatarUrl: 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png',
+          htmlUrl: `https://github.com/${repoStr}`,
+          error: true
+        };
+      }
+
+      return {
+        id: repoData.id,
+        owner: repoData.owner.login,
+        name: repoData.name,
+        fullName: `${repoData.owner.login}/${repoData.name}`,
+        description: repoData.description || '',
+        starsCount: repoData.stargazerCount,
+        forksCount: repoData.forkCount,
+        openIssuesCount: repoData.issues?.totalCount ?? 0,
+        avatarUrl: repoData.owner.avatarUrl,
+        htmlUrl: repoData.url
+      };
+    });
 
     cache[cacheKey] = {
       data: results,

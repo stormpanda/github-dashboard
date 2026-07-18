@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, finalize, tap, throwError } from 'rxjs';
 
 export interface Repository {
-  id: number;
+  id: number | string;
   owner: string;
   name: string;
   fullName: string;
