@@ -416,6 +416,31 @@
 
               @if (activeTab() === 'stargazers') {
                 <div class="stargazers-container">
+                  <div class="sort-bar">
+                    <span class="sort-label">Sort by:</span>
+                    <div class="sort-options">
+                      <button class="sort-btn" 
+                              [class.active]="stargazersSort() === 'date_desc'" 
+                              (click)="stargazersSort.set('date_desc')">
+                        📅 Newest
+                      </button>
+                      <button class="sort-btn" 
+                              [class.active]="stargazersSort() === 'date_asc'" 
+                              (click)="stargazersSort.set('date_asc')">
+                        📅 Oldest
+                      </button>
+                      <button class="sort-btn" 
+                              [class.active]="stargazersSort() === 'followers'" 
+                              (click)="stargazersSort.set('followers')">
+                        👥 Followers
+                      </button>
+                      <button class="sort-btn" 
+                              [class.active]="stargazersSort() === 'repos'" 
+                              (click)="stargazersSort.set('repos')">
+                        💻 Repositories
+                      </button>
+                    </div>
+                  </div>
                   <div class="stargazers-grid">
                     @for (star of stargazersList(); track star.user.login) {
                       <a [href]="star.user.html_url" target="_blank" class="stargazer-item" [class.profiled]="star.user.hasDetailedStats" rel="noopener">
@@ -449,6 +474,31 @@
                 </div>
               } @else {
                 <div class="stargazers-container">
+                  <div class="sort-bar">
+                    <span class="sort-label">Sort by:</span>
+                    <div class="sort-options">
+                      <button class="sort-btn" 
+                              [class.active]="forksSort() === 'date_desc'" 
+                              (click)="forksSort.set('date_desc')">
+                        📅 Newest
+                      </button>
+                      <button class="sort-btn" 
+                              [class.active]="forksSort() === 'date_asc'" 
+                              (click)="forksSort.set('date_asc')">
+                        📅 Oldest
+                      </button>
+                      <button class="sort-btn" 
+                              [class.active]="forksSort() === 'followers'" 
+                              (click)="forksSort.set('followers')">
+                        👥 Followers
+                      </button>
+                      <button class="sort-btn" 
+                              [class.active]="forksSort() === 'repos'" 
+                              (click)="forksSort.set('repos')">
+                        💻 Repositories
+                      </button>
+                    </div>
+                  </div>
                   <div class="stargazers-grid">
                     @for (fork of forksList(); track fork.id) {
                       <a [href]="fork.html_url" target="_blank" class="stargazer-item" [class.profiled]="fork.owner.hasDetailedStats" rel="noopener">

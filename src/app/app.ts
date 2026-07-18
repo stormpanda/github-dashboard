@@ -48,11 +48,47 @@ export class App implements OnInit {
   });
   protected readonly starsCount = computed(() => this.selectedRepo()?.starsCount ?? 0);
 
+  // Sorting options
+  protected readonly stargazersSort = signal<'date_desc' | 'date_asc' | 'followers' | 'repos'>('date_desc');
+  protected readonly forksSort = signal<'date_desc' | 'date_asc' | 'followers' | 'repos'>('date_desc');
+
   // Stargazers log
-  protected readonly stargazersList = computed(() => this.summary()?.stargazers ?? []);
+  protected readonly stargazersList = computed(() => {
+    const list = [...(this.summary()?.stargazers ?? [])];
+    const sort = this.stargazersSort();
+    if (sort === 'date_desc') {
+      return list.sort((a, b) => new Date(b.starred_at).getTime() - new Date(a.starred_at).getTime());
+    }
+    if (sort === 'date_asc') {
+      return list.sort((a, b) => new Date(a.starred_at).getTime() - new Date(b.starred_at).getTime());
+    }
+    if (sort === 'followers') {
+      return list.sort((a, b) => (b.user.followers ?? 0) - (a.user.followers ?? 0));
+    }
+    if (sort === 'repos') {
+      return list.sort((a, b) => (b.user.public_repos ?? 0) - (a.user.public_repos ?? 0));
+    }
+    return list;
+  });
 
   // Forks log
-  protected readonly forksList = computed(() => this.summary()?.forks ?? []);
+  protected readonly forksList = computed(() => {
+    const list = [...(this.summary()?.forks ?? [])];
+    const sort = this.forksSort();
+    if (sort === 'date_desc') {
+      return list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    }
+    if (sort === 'date_asc') {
+      return list.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    }
+    if (sort === 'followers') {
+      return list.sort((a, b) => (b.owner.followers ?? 0) - (a.owner.followers ?? 0));
+    }
+    if (sort === 'repos') {
+      return list.sort((a, b) => (b.owner.public_repos ?? 0) - (a.owner.public_repos ?? 0));
+    }
+    return list;
+  });
 
   // --- CHART COMPUTATIONS (Phase 2 Native SVG Charts) ---
 
