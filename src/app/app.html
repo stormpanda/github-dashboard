@@ -204,8 +204,8 @@
                     </div>
                   </div>
                   <div class="chart-legend">
-                    <div class="legend-item"><span class="legend-dot views-dot"></span> Seitenaufrufe (Views)</div>
-                    <div class="legend-item"><span class="legend-dot clones-dot"></span> Code-Downloads (Clones)</div>
+                    <div class="legend-item"><span class="legend-dot views-dot"></span> Page Views</div>
+                    <div class="legend-item"><span class="legend-dot clones-dot"></span> Code Clones</div>
                   </div>
                 } @else {
                   <div class="empty-state-placeholder">
@@ -259,7 +259,7 @@
                     </div>
                   </div>
                   <div class="chart-legend">
-                    <div class="legend-item"><span class="legend-dot stars-dot"></span> Gesamte Sterne (Stars)</div>
+                    <div class="legend-item"><span class="legend-dot stars-dot"></span> Cumulative Stars</div>
                   </div>
                 } @else {
                   <div class="empty-state-placeholder">
@@ -402,7 +402,7 @@
                   <button class="tab-btn" 
                           [class.active]="activeTab() === 'forks'" 
                           (click)="activeTab.set('forks')">
-                    🔱 Forks (Klone)
+                    🔱 Forks
                   </button>
                 </div>
                 <span class="badge">
