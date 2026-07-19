@@ -60,14 +60,21 @@
           <app-kpi-cards />
 
           <!-- SVG Visual Charts Subcomponents -->
-          <div class="grid-section split-3">
+          <div class="grid-section split-2">
             <app-engagement-chart />
             <app-star-chart />
-            <app-downloads-chart />
           </div>
 
-          <!-- Popular Content & Traffic Sources Subcomponent -->
-          <app-traffic-tables />
+          <!-- Downloads Chart & Traffic Tables Stacked Layout -->
+          <div class="grid-section split-2">
+            <div class="column-stack">
+              <app-downloads-chart />
+              <app-popular-paths />
+            </div>
+            <div class="column-stack">
+              <app-traffic-referrers />
+            </div>
+          </div>
 
           <!-- Releases & Stargazers Tabbed Log Subcomponents -->
           <div class="grid-section split-2">

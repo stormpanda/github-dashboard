@@ -5,7 +5,8 @@ import { Sidebar } from './sidebar';
 import { KpiCards } from './kpi-cards';
 import { EngagementChart } from './engagement-chart';
 import { StarChart } from './star-chart';
-import { TrafficTables } from './traffic-tables';
+import { PopularPaths } from './popular-paths';
+import { TrafficReferrers } from './traffic-referrers';
 import { ReleasesList } from './releases-list';
 import { StargazersList } from './stargazers-list';
 import { DownloadsChart } from './downloads-chart';
@@ -19,7 +20,8 @@ import { DownloadsChart } from './downloads-chart';
     EngagementChart,
     StarChart,
     DownloadsChart,
-    TrafficTables,
+    PopularPaths,
+    TrafficReferrers,
     ReleasesList,
     StargazersList,
   ],

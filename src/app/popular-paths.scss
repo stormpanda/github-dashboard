@@ -1,15 +1,5 @@
 @use 'variables' as *;
 
-.grid-section.split-2 {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 24px;
-
-  @media (max-width: 1100px) {
-    grid-template-columns: 1fr;
-  }
-}
-
 .data-card {
   background: $bg-glass;
   border: 1px solid $border-glass;
@@ -20,6 +10,7 @@
   display: flex;
   flex-direction: column;
   min-height: 380px;
+  height: 100%;
   animation: cardAppear 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
   box-shadow: $shadow-glass;
   transition: border-color 0.3s ease, box-shadow 0.3s ease;

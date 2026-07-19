@@ -299,6 +299,12 @@
   }
 }
 
+.column-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
 // Bottom footer details
 .dashboard-bottom-info {
   display: flex;
