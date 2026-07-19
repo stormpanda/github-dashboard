@@ -8,6 +8,7 @@ import { StarChart } from './star-chart';
 import { TrafficTables } from './traffic-tables';
 import { ReleasesList } from './releases-list';
 import { StargazersList } from './stargazers-list';
+import { DownloadsChart } from './downloads-chart';
 
 @Component({
   selector: 'app-root',
@@ -17,6 +18,7 @@ import { StargazersList } from './stargazers-list';
     KpiCards,
     EngagementChart,
     StarChart,
+    DownloadsChart,
     TrafficTables,
     ReleasesList,
     StargazersList,
