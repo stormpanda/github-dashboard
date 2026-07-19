@@ -33,9 +33,12 @@ import { GithubService } from './github';
               <path [attr.d]="starChartPaths().area" fill="url(#starsGrad)" />
               <path [attr.d]="starChartPaths().line" fill="none" stroke="#8b5cf6" stroke-width="2.5" stroke-linecap="round" />
               
-              <!-- Interactive Points -->
+              <!-- Interactive Hover Groups -->
               @for (pt of starChartPaths().points; track pt.date) {
-                <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="4" fill="#8b5cf6" stroke="#fff" stroke-width="1.5" class="chart-point" />
+                <g class="chart-point-group">
+                  <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="4" fill="#8b5cf6" stroke="#fff" stroke-width="1.5" class="chart-point" />
+                  <text [attr.x]="pt.x" [attr.y]="pt.y - 10" text-anchor="middle" class="chart-value-label stars-label">{{ pt.count }}</text>
+                </g>
               }
             </svg>
 

@@ -41,10 +41,16 @@ import { GithubService } from './github';
               <path [attr.d]="engagementChartPaths().clonesArea" fill="url(#clonesGrad)" />
               <path [attr.d]="engagementChartPaths().clonesLine" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" />
               
-              <!-- Interactive Hover Circles -->
+              <!-- Interactive Hover Groups -->
               @for (pt of engagementChartPaths().points; track pt.date) {
-                <circle [attr.cx]="pt.x" [attr.cy]="pt.yViews" r="4" fill="#3b82f6" stroke="#fff" stroke-width="1.5" class="chart-point" />
-                <circle [attr.cx]="pt.x" [attr.cy]="pt.yClones" r="4" fill="#10b981" stroke="#fff" stroke-width="1.5" class="chart-point" />
+                <g class="chart-point-group">
+                  <circle [attr.cx]="pt.x" [attr.cy]="pt.yViews" r="4" fill="#3b82f6" stroke="#fff" stroke-width="1.5" class="chart-point" />
+                  <text [attr.x]="pt.x" [attr.y]="pt.yViews - 10" text-anchor="middle" class="chart-value-label views-label">{{ pt.views }}</text>
+                </g>
+                <g class="chart-point-group">
+                  <circle [attr.cx]="pt.x" [attr.cy]="pt.yClones" r="4" fill="#10b981" stroke="#fff" stroke-width="1.5" class="chart-point" />
+                  <text [attr.x]="pt.x" [attr.y]="pt.yClones + 15" text-anchor="middle" class="chart-value-label clones-label">{{ pt.clones }}</text>
+                </g>
               }
             </svg>
 

@@ -160,3 +160,10 @@ export class RepositoryListLegacy {
   ) {}
 }
 ```
+
+---
+
+## 6. Git & Commit Workflow
+
+*   **Change Verification**: Whenever changes are made to the workspace, you must run `git status` to verify the modified, added, or deleted files.
+*   **Conventional Commit Message**: Suggest a commit message adhering to the **Conventional Commits** style (e.g., `feat(component): add user-profile`, `fix(auth): resolve login token expiration`) that describes all uncommitted changes.

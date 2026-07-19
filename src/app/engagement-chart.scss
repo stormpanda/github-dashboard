@@ -74,18 +74,58 @@
   height: 100%;
   overflow: visible;
 
-  .chart-point {
-    opacity: 0;
-    scale: 0.8;
-    transform-origin: center;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    cursor: crosshair;
+  .chart-point-group {
+    cursor: pointer;
+
+    .chart-point {
+      opacity: 0;
+      scale: 0.8;
+      transform-box: fill-box;
+      transform-origin: center;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .chart-value-label {
+      opacity: 0;
+      font-size: 9.5px;
+      font-weight: 600;
+      stroke: #070a13;
+      stroke-width: 2.5px;
+      paint-order: stroke fill;
+      pointer-events: none;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+      &.views-label {
+        fill: #93c5fd;
+      }
+
+      &.clones-label {
+        fill: #6ee7b7;
+      }
+    }
+
+    &:hover {
+      .chart-point {
+        opacity: 1;
+        scale: 1.4;
+      }
+
+      .chart-value-label {
+        opacity: 1;
+        font-size: 11px;
+      }
+    }
   }
 
   &:hover {
-    .chart-point {
-      opacity: 1;
-      scale: 1;
+    .chart-point-group:not(:hover) {
+      .chart-point {
+        opacity: 0.5;
+        scale: 1;
+      }
+      .chart-value-label {
+        opacity: 0;
+      }
     }
   }
 }
