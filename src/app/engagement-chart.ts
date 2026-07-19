@@ -1,4 +1,4 @@
-import { Component, inject, computed } from '@angular/core';
+import { Component, inject, computed, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { GithubService } from './github';
 
@@ -43,22 +43,32 @@ import { GithubService } from './github';
               
               <!-- Interactive Hover Groups -->
               @for (pt of engagementChartPaths().points; track pt.date) {
-                <g class="chart-point-group">
+                <g class="chart-point-group"
+                   [class.active]="hoveredIndex() === $index"
+                   (mouseenter)="hoveredIndex.set($index)"
+                   (mouseleave)="hoveredIndex.set(null)">
                   <circle [attr.cx]="pt.x" [attr.cy]="pt.yViews" r="4" fill="#3b82f6" stroke="#fff" stroke-width="1.5" class="chart-point" />
                   <text [attr.x]="pt.x" [attr.y]="pt.yViews - 10" text-anchor="middle" class="chart-value-label views-label">{{ pt.views }}</text>
                 </g>
-                <g class="chart-point-group">
+                <g class="chart-point-group"
+                   [class.active]="hoveredIndex() === $index"
+                   (mouseenter)="hoveredIndex.set($index)"
+                   (mouseleave)="hoveredIndex.set(null)">
                   <circle [attr.cx]="pt.x" [attr.cy]="pt.yClones" r="4" fill="#10b981" stroke="#fff" stroke-width="1.5" class="chart-point" />
-                  <text [attr.x]="pt.x" [attr.y]="pt.yClones + 15" text-anchor="middle" class="chart-value-label clones-label">{{ pt.clones }}</text>
+                  <text [attr.x]="pt.x" [attr.y]="pt.yClones - 10" text-anchor="middle" class="chart-value-label clones-label">{{ pt.clones }}</text>
                 </g>
               }
             </svg>
 
             <!-- Interactive X-Axis Labels -->
             <div class="chart-x-axis">
-              @for (pt of engagementChartPaths().points; track pt.date; let isLast = $last, isFirst = $first) {
-                @if (isFirst || isLast || $index === 4 || $index === 9) {
-                  <span class="axis-label" [style.left.%]="(pt.x / 600) * 100">{{ pt.date | date:'MM/dd' }}</span>
+              @for (pt of engagementChartPaths().points; track pt.date) {
+                @if ($first || $last || $index === 4 || $index === 9 || hoveredIndex() === $index) {
+                  <span class="axis-label" 
+                        [class.active]="hoveredIndex() === $index" 
+                        [style.left.%]="(pt.x / 600) * 100">
+                    {{ pt.date | date:'MM/dd' }}
+                  </span>
                 }
               }
             </div>
@@ -79,6 +89,7 @@ import { GithubService } from './github';
 })
 export class EngagementChart {
   protected readonly githubService = inject(GithubService);
+  protected readonly hoveredIndex = signal<number | null>(null);
 
   protected readonly dailyTrends = computed(() => {
     const views = this.githubService.summary()?.views.views ?? [];

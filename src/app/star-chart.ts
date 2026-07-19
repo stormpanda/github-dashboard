@@ -1,4 +1,4 @@
-import { Component, inject, computed } from '@angular/core';
+import { Component, inject, computed, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { GithubService } from './github';
 
@@ -17,7 +17,10 @@ import { GithubService } from './github';
       <div class="chart-container">
         @if (starGrowthHistory().length > 1) {
           <div class="svg-chart-wrap">
-            <svg viewBox="0 0 600 180" class="svg-chart" preserveAspectRatio="none">
+            <svg viewBox="0 0 600 180" 
+                 class="svg-chart" 
+                 [class.has-hovered]="hoveredIndex() !== null"
+                 preserveAspectRatio="none">
               <defs>
                 <linearGradient id="starsGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.25"/>
@@ -35,7 +38,10 @@ import { GithubService } from './github';
               
               <!-- Interactive Hover Groups -->
               @for (pt of starChartPaths().points; track pt.date) {
-                <g class="chart-point-group">
+                <g class="chart-point-group"
+                   [class.active]="hoveredIndex() === $index"
+                   (mouseenter)="hoveredIndex.set($index)"
+                   (mouseleave)="hoveredIndex.set(null)">
                   <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="4" fill="#8b5cf6" stroke="#fff" stroke-width="1.5" class="chart-point" />
                   <text [attr.x]="pt.x" [attr.y]="pt.y - 10" text-anchor="middle" class="chart-value-label stars-label">{{ pt.count }}</text>
                 </g>
@@ -44,9 +50,13 @@ import { GithubService } from './github';
 
             <!-- Interactive X-Axis Labels -->
             <div class="chart-x-axis">
-              @for (pt of starChartPaths().points; track pt.date; let isLast = $last, isFirst = $first) {
-                @if (isFirst || isLast || $index === Math.floor(starChartPaths().points.length / 2)) {
-                  <span class="axis-label" [style.left.%]="(pt.x / 600) * 100">{{ pt.date | date:'MM/dd' }}</span>
+              @for (pt of starChartPaths().points; track pt.date) {
+                @if ($first || $last || $index === Math.floor(starChartPaths().points.length / 2) || hoveredIndex() === $index) {
+                  <span class="axis-label" 
+                        [class.active]="hoveredIndex() === $index" 
+                        [style.left.%]="(pt.x / 600) * 100">
+                    {{ pt.date | date:'MM/dd' }}
+                  </span>
                 }
               }
             </div>
@@ -67,6 +77,7 @@ import { GithubService } from './github';
 export class StarChart {
   protected readonly githubService = inject(GithubService);
   protected readonly Math = Math;
+  protected readonly hoveredIndex = signal<number | null>(null);
 
   protected readonly starGrowthHistory = computed(() => {
     const rawStargazers = this.githubService.summary()?.stargazers ?? [];
