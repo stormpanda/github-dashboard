@@ -1,10 +1,9 @@
 import { Component, inject, computed, signal } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
 import { GithubService } from './github';
 
 @Component({
   selector: 'app-downloads-chart',
-  imports: [DecimalPipe],
+  imports: [],
   template: `
     <div class="data-card svg-chart-card">
       <div class="card-header">
@@ -45,7 +44,7 @@ import { GithubService } from './github';
                    (mouseenter)="hoveredIndex.set(idx)"
                    (mouseleave)="hoveredIndex.set(null)">
                   <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="4" fill="#f59e0b" stroke="#fff" stroke-width="1.5" class="chart-point" />
-                  <text [attr.x]="pt.x" [attr.y]="pt.y - 15" text-anchor="middle" class="chart-value-label downloads-label">{{ pt.count | number }}</text>
+                  <text [attr.x]="pt.x" [attr.y]="pt.y - 15" text-anchor="middle" class="chart-value-label downloads-label">{{ getPointLabel(idx) }}</text>
                 </g>
               }
             </svg>
@@ -133,4 +132,31 @@ export class DownloadsChart {
 
     return { line, area, points: pointsList };
   });
+
+  protected getPointLabel(index: number): string {
+    const history = this.releaseDownloads();
+    const hovered = this.hoveredIndex();
+    
+    if (hovered === null || hovered === index) {
+      return this.formatNumber(history[index].count);
+    }
+    
+    const baseIdx = Math.min(index, hovered);
+    const targetIdx = Math.max(index, hovered);
+    
+    const baseVal = history[baseIdx].count;
+    const targetVal = history[targetIdx].count;
+    
+    if (baseVal === 0) {
+      return targetVal > 0 ? '+100%' : '0%';
+    }
+    
+    const growth = ((targetVal - baseVal) / baseVal) * 100;
+    const sign = growth >= 0 ? '+' : '';
+    return `${sign}${growth.toFixed(0)}%`;
+  }
+
+  private formatNumber(val: number): string {
+    return val.toLocaleString();
+  }
 }
