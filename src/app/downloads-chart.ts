@@ -45,7 +45,7 @@ import { GithubService } from './github';
                    (mouseenter)="hoveredIndex.set(idx)"
                    (mouseleave)="hoveredIndex.set(null)">
                   <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="4" fill="#f59e0b" stroke="#fff" stroke-width="1.5" class="chart-point" />
-                  <text [attr.x]="pt.x" [attr.y]="pt.y - 10" text-anchor="middle" class="chart-value-label downloads-label">{{ pt.count | number }}</text>
+                  <text [attr.x]="pt.x" [attr.y]="pt.y - 15" text-anchor="middle" class="chart-value-label downloads-label">{{ pt.count | number }}</text>
                 </g>
               }
             </svg>

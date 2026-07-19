@@ -48,14 +48,14 @@ import { GithubService } from './github';
                    (mouseenter)="hoveredIndex.set($index)"
                    (mouseleave)="hoveredIndex.set(null)">
                   <circle [attr.cx]="pt.x" [attr.cy]="pt.yViews" r="4" fill="#3b82f6" stroke="#fff" stroke-width="1.5" class="chart-point" />
-                  <text [attr.x]="pt.x" [attr.y]="pt.yViews - 10" text-anchor="middle" class="chart-value-label views-label">{{ pt.views }}</text>
+                  <text [attr.x]="pt.x" [attr.y]="pt.yViews - 15" text-anchor="middle" class="chart-value-label views-label">{{ pt.views }}</text>
                 </g>
                 <g class="chart-point-group"
                    [class.active]="hoveredIndex() === $index"
                    (mouseenter)="hoveredIndex.set($index)"
                    (mouseleave)="hoveredIndex.set(null)">
                   <circle [attr.cx]="pt.x" [attr.cy]="pt.yClones" r="4" fill="#10b981" stroke="#fff" stroke-width="1.5" class="chart-point" />
-                  <text [attr.x]="pt.x" [attr.y]="pt.yClones - 10" text-anchor="middle" class="chart-value-label clones-label">{{ pt.clones }}</text>
+                  <text [attr.x]="pt.x" [attr.y]="pt.yClones - 15" text-anchor="middle" class="chart-value-label clones-label">{{ pt.clones }}</text>
                 </g>
               }
             </svg>
