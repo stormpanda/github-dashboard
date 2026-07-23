@@ -10,7 +10,7 @@ import { GithubService } from './github';
       <div class="card-header">
         <div class="card-title-group">
           <h3>Daily Visitor Engagement</h3>
-          <p class="card-subtitle">Views (Blue) vs. Clones (Emerald) over 14 days</p>
+          <p class="card-subtitle">Views (Blue), Total Clones (Emerald), and Unique Cloners (Purple) over 14 days</p>
         </div>
         <span class="badge">Engagement Trends</span>
       </div>
@@ -27,6 +27,10 @@ import { GithubService } from './github';
                   <stop offset="0%" stop-color="#10b981" stop-opacity="0.18"/>
                   <stop offset="100%" stop-color="#10b981" stop-opacity="0.00"/>
                 </linearGradient>
+                <linearGradient id="clonesUniquesGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.15"/>
+                  <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.00"/>
+                </linearGradient>
               </defs>
               <!-- Horizontal Grid lines -->
               <line x1="0" y1="15" x2="600" y2="15" stroke="rgba(255,255,255,0.03)" stroke-width="1" />
@@ -37,9 +41,13 @@ import { GithubService } from './github';
               <path [attr.d]="engagementChartPaths().viewsArea" fill="url(#viewsGrad)" />
               <path [attr.d]="engagementChartPaths().viewsLine" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" />
               
-              <!-- Clones Area & Line -->
+              <!-- Total Clones Area & Line -->
               <path [attr.d]="engagementChartPaths().clonesArea" fill="url(#clonesGrad)" />
               <path [attr.d]="engagementChartPaths().clonesLine" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" />
+              
+              <!-- Unique Cloners Area & Line -->
+              <path [attr.d]="engagementChartPaths().clonesUniquesArea" fill="url(#clonesUniquesGrad)" />
+              <path [attr.d]="engagementChartPaths().clonesUniquesLine" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round" stroke-dasharray="4 3" />
               
               <!-- Interactive Hover Groups -->
               @for (pt of engagementChartPaths().points; track pt.date) {
@@ -56,6 +64,13 @@ import { GithubService } from './github';
                    (mouseleave)="hoveredIndex.set(null)">
                   <circle [attr.cx]="pt.x" [attr.cy]="pt.yClones" r="4" fill="#10b981" stroke="#fff" stroke-width="1.5" class="chart-point" />
                   <text [attr.x]="pt.x" [attr.y]="pt.yClones - 15" text-anchor="middle" class="chart-value-label clones-label">{{ pt.clones }}</text>
+                </g>
+                <g class="chart-point-group"
+                   [class.active]="hoveredIndex() === $index"
+                   (mouseenter)="hoveredIndex.set($index)"
+                   (mouseleave)="hoveredIndex.set(null)">
+                  <circle [attr.cx]="pt.x" [attr.cy]="pt.yClonesUniques" r="3.5" fill="#8b5cf6" stroke="#fff" stroke-width="1.5" class="chart-point" />
+                  <text [attr.x]="pt.x" [attr.y]="pt.yClonesUniques - 15" text-anchor="middle" class="chart-value-label clones-uniques-label">{{ pt.clonesUniques }}</text>
                 </g>
               }
             </svg>
@@ -75,7 +90,8 @@ import { GithubService } from './github';
           </div>
           <div class="chart-legend">
             <div class="legend-item"><span class="legend-dot views-dot"></span> Page Views</div>
-            <div class="legend-item"><span class="legend-dot clones-dot"></span> Code Clones</div>
+            <div class="legend-item"><span class="legend-dot clones-dot"></span> Total Clones</div>
+            <div class="legend-item"><span class="legend-dot clones-uniques-dot"></span> Unique Cloners</div>
           </div>
         } @else {
           <div class="empty-state-placeholder">
@@ -119,16 +135,17 @@ export class EngagementChart {
   protected readonly engagementChartPaths = computed(() => {
     const trends = this.dailyTrends();
     const N = trends.length;
-    if (N < 2) return { viewsLine: '', viewsArea: '', clonesLine: '', clonesArea: '', points: [] as any[] };
+    if (N < 2) return { viewsLine: '', viewsArea: '', clonesLine: '', clonesArea: '', clonesUniquesLine: '', clonesUniquesArea: '', points: [] as any[] };
     
     const width = 600;
     const height = 180;
     const bottomY = height;
-    const maxVal = Math.max(...trends.map(t => Math.max(t.views, t.clones)), 1);
+    const maxVal = Math.max(...trends.map(t => Math.max(t.views, t.clones, t.clonesUniques)), 1);
     const dx = width / (N - 1);
     
     const viewsPoints: string[] = [];
     const clonesPoints: string[] = [];
+    const clonesUniquesPoints: string[] = [];
     const pointsList: any[] = [];
     
     for (let i = 0; i < N; i++) {
@@ -136,15 +153,18 @@ export class EngagementChart {
       const x = i * dx;
       const yViews = height - (t.views / maxVal) * 140 - 15;
       const yClones = height - (t.clones / maxVal) * 140 - 15;
+      const yClonesUniques = height - (t.clonesUniques / maxVal) * 140 - 15;
       
       viewsPoints.push(`${x.toFixed(1)},${yViews.toFixed(1)}`);
       clonesPoints.push(`${x.toFixed(1)},${yClones.toFixed(1)}`);
+      clonesUniquesPoints.push(`${x.toFixed(1)},${yClonesUniques.toFixed(1)}`);
       
       pointsList.push({
         date: t.date,
         x,
         yViews,
         yClones,
+        yClonesUniques,
         views: t.views,
         viewsUniques: t.viewsUniques,
         clones: t.clones,
@@ -158,6 +178,9 @@ export class EngagementChart {
     const clonesLine = 'M ' + clonesPoints.join(' L ');
     const clonesArea = `${clonesLine} L ${width},${bottomY} L 0,${bottomY} Z`;
     
-    return { viewsLine, viewsArea, clonesLine, clonesArea, points: pointsList };
+    const clonesUniquesLine = 'M ' + clonesUniquesPoints.join(' L ');
+    const clonesUniquesArea = `${clonesUniquesLine} L ${width},${bottomY} L 0,${bottomY} Z`;
+    
+    return { viewsLine, viewsArea, clonesLine, clonesArea, clonesUniquesLine, clonesUniquesArea, points: pointsList };
   });
 }

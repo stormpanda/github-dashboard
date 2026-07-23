@@ -102,6 +102,10 @@
       &.clones-label {
         fill: #6ee7b7;
       }
+
+      &.clones-uniques-label {
+        fill: #c084fc;
+      }
     }
 
     &.active {
@@ -192,6 +196,7 @@
 
     &.views-dot { background: $accent-blue; }
     &.clones-dot { background: $accent-emerald; }
+    &.clones-uniques-dot { background: $accent-purple; }
   }
 }
 
