@@ -55,6 +55,11 @@ import { GithubService, GitHubUser } from './github';
                       (click)="githubService.stargazersSort.set('repos')">
                 💻 Repositories
               </button>
+              <button class="sort-btn" 
+                      [class.active]="githubService.stargazersSort() === 'stars'" 
+                      (click)="githubService.stargazersSort.set('stars')">
+                ⭐ Stars
+              </button>
             </div>
           </div>
           <div class="stargazers-grid">
@@ -75,6 +80,7 @@ import { GithubService, GitHubUser } from './github';
                     <div class="user-stats-row">
                       <span class="stat-badge">👥 {{ star.user.followers | number }} followers</span>
                       <span class="stat-badge">💻 {{ star.user.public_repos }} repos</span>
+                      <span class="stat-badge">⭐ {{ (star.user.earned_stars ?? 0) | number }} stars</span>
                     </div>
                   }
                   <span class="starred-date">Starred {{ star.starred_at | date:'shortDate' }}</span>
@@ -170,6 +176,9 @@ export class StargazersList {
     if (sort === 'repos') {
       return list.sort((a, b) => (b.user.public_repos ?? 0) - (a.user.public_repos ?? 0));
     }
+    if (sort === 'stars') {
+      return list.sort((a, b) => (b.user.earned_stars ?? 0) - (a.user.earned_stars ?? 0));
+    }
     return list;
   });
 
@@ -192,7 +201,7 @@ export class StargazersList {
   });
 
   protected getInfluenceScore(user: GitHubUser): number {
-    return (user.followers ?? 0) * 2 + (user.public_repos ?? 0) * 0.5;
+    return (user.followers ?? 0) * 2 + (user.public_repos ?? 0) * 0.5 + (user.earned_stars ?? 0) * 1.5;
   }
 
   protected getInfluenceLabel(user: GitHubUser): string | null {

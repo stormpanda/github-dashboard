@@ -220,8 +220,11 @@ app.get('/api/repos/:owner/:repo/summary', async (req, res) => {
                 followers {
                   totalCount
                 }
-                repositories(privacy: PUBLIC) {
+                repositories(ownerAffiliations: OWNER, isFork: false, first: 100) {
                   totalCount
+                  nodes {
+                    stargazerCount
+                  }
                 }
               }
             }
@@ -281,22 +284,30 @@ app.get('/api/repos/:owner/:repo/summary', async (req, res) => {
     let stargazers: any[] = [];
     let forks: any[] = [];
     let releases: any[] = [];
+    let totalStargazerStars = 0;
 
     if (gqlData.status === 'fulfilled' && gqlData.value && gqlData.value.data && gqlData.value.data.repository) {
       const repoData = gqlData.value.data.repository;
       
       if (repoData.stargazers && Array.isArray(repoData.stargazers.edges)) {
-        stargazers = repoData.stargazers.edges.map((edge: any) => ({
-          starred_at: edge.starredAt,
-          user: {
-            login: edge.node.login,
-            avatar_url: edge.node.avatarUrl,
-            html_url: edge.node.url,
-            followers: edge.node.followers?.totalCount ?? 0,
-            public_repos: edge.node.repositories?.totalCount ?? 0,
-            hasDetailedStats: true
-          }
-        }));
+        stargazers = repoData.stargazers.edges.map((edge: any) => {
+          const userRepos = edge.node.repositories?.nodes || [];
+          const userEarnedStars = userRepos.reduce((acc: number, r: any) => acc + (r.stargazerCount ?? 0), 0);
+          totalStargazerStars += userEarnedStars;
+
+          return {
+            starred_at: edge.starredAt,
+            user: {
+              login: edge.node.login,
+              avatar_url: edge.node.avatarUrl,
+              html_url: edge.node.url,
+              followers: edge.node.followers?.totalCount ?? 0,
+              public_repos: edge.node.repositories?.totalCount ?? 0,
+              earned_stars: userEarnedStars,
+              hasDetailedStats: true
+            }
+          };
+        });
       }
 
       if (repoData.forks && Array.isArray(repoData.forks.nodes)) {
@@ -346,6 +357,7 @@ app.get('/api/repos/:owner/:repo/summary', async (req, res) => {
       releases,
       stargazers,
       forks,
+      totalStargazerStars,
       fetchedAt: now
     };
 
