@@ -34,7 +34,7 @@ import { GithubService } from './github';
           <span class="metric-icon">📦</span>
         </div>
         <div class="metric-value">{{ totalDownloads() | number }}</div>
-        <p class="metric-sub">Release artifact file downloads</p>
+        <p class="metric-sub"><b>{{ currentReleaseDownloads() | number }}</b> downloads of current release</p>
       </div>
 
       <!-- Card 4: Stars Count -->
@@ -68,6 +68,12 @@ export class KpiCards {
       }
     }
     return sum;
+  });
+
+  protected readonly currentReleaseDownloads = computed(() => {
+    const releases = this.githubService.summary()?.releases ?? [];
+    if (releases.length === 0) return 0;
+    return releases[0].assets.reduce((sum, asset) => sum + asset.download_count, 0);
   });
 
   protected readonly starsCount = computed(() => this.githubService.selectedRepo()?.starsCount ?? 0);
