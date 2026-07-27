@@ -220,7 +220,7 @@ app.get('/api/repos/:owner/:repo/summary', async (req, res) => {
                 followers {
                   totalCount
                 }
-                repositories(ownerAffiliations: OWNER, isFork: false, first: 100) {
+                repositories(ownerAffiliations: OWNER, isFork: false, first: 5, orderBy: {field: STARGAZERS, direction: DESC}) {
                   totalCount
                   nodes {
                     stargazerCount
@@ -273,12 +273,81 @@ app.get('/api/repos/:owner/:repo/summary', async (req, res) => {
       }
     `;
 
+    // Fallback query in case GitHub API times out on deep nested repo queries
+    const fallbackGraphqlQuery = `
+      query($owner: String!, $name: String!) {
+        repository(owner: $owner, name: $name) {
+          stargazers(first: 100, orderBy: {field: STARRED_AT, direction: DESC}) {
+            edges {
+              starredAt
+              node {
+                login
+                avatarUrl
+                url
+                followers {
+                  totalCount
+                }
+                repositories(privacy: PUBLIC) {
+                  totalCount
+                }
+              }
+            }
+          }
+          forks(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {
+            nodes {
+              id
+              name
+              nameWithOwner
+              url
+              createdAt
+              owner {
+                login
+                avatarUrl
+                url
+                repositories(privacy: PUBLIC) {
+                  totalCount
+                }
+                ... on User {
+                  followers {
+                    totalCount
+                  }
+                }
+              }
+            }
+          }
+          releases(first: 10, orderBy: {field: CREATED_AT, direction: DESC}) {
+            nodes {
+              id
+              url
+              tagName
+              name
+              createdAt
+              publishedAt
+              releaseAssets(first: 20) {
+                nodes {
+                  name
+                  downloadCount
+                  size
+                  downloadUrl
+                }
+              }
+            }
+          }
+        }
+      }
+    `;
+
+    let gqlResultPromise = runGhGraphql(graphqlQuery, { owner, name: repo }).catch(async (err) => {
+      console.warn(`Primary GraphQL query failed for ${repoStr}, retrying with fallback query:`, err.message);
+      return runGhGraphql(fallbackGraphqlQuery, { owner, name: repo });
+    });
+
     const [viewsData, clonesData, referrersData, pathsData, gqlData] = await Promise.allSettled([
       runGhApi(`repos/${repoStr}/traffic/views`),
       runGhApi(`repos/${repoStr}/traffic/clones`),
       runGhApi(`repos/${repoStr}/traffic/popular/referrers`),
       runGhApi(`repos/${repoStr}/traffic/popular/paths`),
-      runGhGraphql(graphqlQuery, { owner, name: repo })
+      gqlResultPromise
     ]);
 
     let stargazers: any[] = [];
