@@ -77,7 +77,6 @@ export interface GitHubUser {
   html_url: string;
   followers?: number;
   public_repos?: number;
-  earned_stars?: number;
   hasDetailedStats?: boolean;
 }
 
@@ -103,7 +102,6 @@ export interface RepoSummary {
   releases: Release[];
   stargazers: Stargazer[];
   forks: Fork[];
-  totalStargazerStars?: number;
   fetchedAt: number;
 }
 
@@ -124,7 +122,7 @@ export class GithubService {
   readonly loadingSummary = signal<boolean>(false);
   readonly summaryError = signal<string | null>(null);
   readonly activeTab = signal<'stargazers' | 'forks'>('stargazers');
-  readonly stargazersSort = signal<'date_desc' | 'date_asc' | 'followers' | 'repos' | 'stars'>('date_desc');
+  readonly stargazersSort = signal<'date_desc' | 'date_asc' | 'followers' | 'repos'>('date_desc');
   readonly forksSort = signal<'date_desc' | 'date_asc' | 'followers' | 'repos'>('date_desc');
 
   constructor() {

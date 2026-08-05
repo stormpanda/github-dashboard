@@ -220,73 +220,6 @@ app.get('/api/repos/:owner/:repo/summary', async (req, res) => {
                 followers {
                   totalCount
                 }
-                repositories(ownerAffiliations: OWNER, isFork: false, first: 5, orderBy: {field: STARGAZERS, direction: DESC}) {
-                  totalCount
-                  nodes {
-                    stargazerCount
-                  }
-                }
-              }
-            }
-          }
-          forks(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {
-            nodes {
-              id
-              name
-              nameWithOwner
-              url
-              createdAt
-              owner {
-                login
-                avatarUrl
-                url
-                repositories(privacy: PUBLIC) {
-                  totalCount
-                }
-                ... on User {
-                  followers {
-                    totalCount
-                  }
-                }
-              }
-            }
-          }
-          releases(first: 10, orderBy: {field: CREATED_AT, direction: DESC}) {
-            nodes {
-              id
-              url
-              tagName
-              name
-              createdAt
-              publishedAt
-              releaseAssets(first: 20) {
-                nodes {
-                  name
-                  downloadCount
-                  size
-                  downloadUrl
-                }
-              }
-            }
-          }
-        }
-      }
-    `;
-
-    // Fallback query in case GitHub API times out on deep nested repo queries
-    const fallbackGraphqlQuery = `
-      query($owner: String!, $name: String!) {
-        repository(owner: $owner, name: $name) {
-          stargazers(first: 100, orderBy: {field: STARRED_AT, direction: DESC}) {
-            edges {
-              starredAt
-              node {
-                login
-                avatarUrl
-                url
-                followers {
-                  totalCount
-                }
                 repositories(privacy: PUBLIC) {
                   totalCount
                 }
@@ -336,47 +269,34 @@ app.get('/api/repos/:owner/:repo/summary', async (req, res) => {
         }
       }
     `;
-
-    let gqlResultPromise = runGhGraphql(graphqlQuery, { owner, name: repo }).catch(async (err) => {
-      console.warn(`Primary GraphQL query failed for ${repoStr}, retrying with fallback query:`, err.message);
-      return runGhGraphql(fallbackGraphqlQuery, { owner, name: repo });
-    });
 
     const [viewsData, clonesData, referrersData, pathsData, gqlData] = await Promise.allSettled([
       runGhApi(`repos/${repoStr}/traffic/views`),
       runGhApi(`repos/${repoStr}/traffic/clones`),
       runGhApi(`repos/${repoStr}/traffic/popular/referrers`),
       runGhApi(`repos/${repoStr}/traffic/popular/paths`),
-      gqlResultPromise
+      runGhGraphql(graphqlQuery, { owner, name: repo })
     ]);
 
     let stargazers: any[] = [];
     let forks: any[] = [];
     let releases: any[] = [];
-    let totalStargazerStars = 0;
 
     if (gqlData.status === 'fulfilled' && gqlData.value && gqlData.value.data && gqlData.value.data.repository) {
       const repoData = gqlData.value.data.repository;
       
       if (repoData.stargazers && Array.isArray(repoData.stargazers.edges)) {
-        stargazers = repoData.stargazers.edges.map((edge: any) => {
-          const userRepos = edge.node.repositories?.nodes || [];
-          const userEarnedStars = userRepos.reduce((acc: number, r: any) => acc + (r.stargazerCount ?? 0), 0);
-          totalStargazerStars += userEarnedStars;
-
-          return {
-            starred_at: edge.starredAt,
-            user: {
-              login: edge.node.login,
-              avatar_url: edge.node.avatarUrl,
-              html_url: edge.node.url,
-              followers: edge.node.followers?.totalCount ?? 0,
-              public_repos: edge.node.repositories?.totalCount ?? 0,
-              earned_stars: userEarnedStars,
-              hasDetailedStats: true
-            }
-          };
-        });
+        stargazers = repoData.stargazers.edges.map((edge: any) => ({
+          starred_at: edge.starredAt,
+          user: {
+            login: edge.node.login,
+            avatar_url: edge.node.avatarUrl,
+            html_url: edge.node.url,
+            followers: edge.node.followers?.totalCount ?? 0,
+            public_repos: edge.node.repositories?.totalCount ?? 0,
+            hasDetailedStats: true
+          }
+        }));
       }
 
       if (repoData.forks && Array.isArray(repoData.forks.nodes)) {
@@ -426,7 +346,6 @@ app.get('/api/repos/:owner/:repo/summary', async (req, res) => {
       releases,
       stargazers,
       forks,
-      totalStargazerStars,
       fetchedAt: now
     };
 

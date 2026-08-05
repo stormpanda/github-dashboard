@@ -44,7 +44,7 @@ import { GithubService } from './github';
           <span class="metric-icon">⭐</span>
         </div>
         <div class="metric-value">{{ starsCount() | number }}</div>
-        <p class="metric-sub"><b>{{ stargazerStarsCount() | number }}</b> stars earned by stargazers</p>
+        <p class="metric-sub">Cumulative repository stars</p>
       </div>
     </div>
   `,
@@ -77,5 +77,4 @@ export class KpiCards {
   });
 
   protected readonly starsCount = computed(() => this.githubService.selectedRepo()?.starsCount ?? 0);
-  protected readonly stargazerStarsCount = computed(() => this.githubService.summary()?.totalStargazerStars ?? 0);
 }
