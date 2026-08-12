@@ -1,6 +1,7 @@
-import { Injectable, inject, signal, effect } from '@angular/core';
+import { Injectable, inject, signal, effect, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Observable, catchError, finalize, tap, throwError } from 'rxjs';
+import { Observable, catchError, finalize, of, tap, throwError } from 'rxjs';
 
 export interface Repository {
   id: number | string;
@@ -110,6 +111,7 @@ export interface RepoSummary {
 })
 export class GithubService {
   private readonly http = inject(HttpClient);
+  private readonly platformId = inject(PLATFORM_ID);
 
   // Read-only signals representing local state
   readonly repos = signal<Repository[]>([]);
@@ -144,12 +146,17 @@ export class GithubService {
 
     this.http.get<Repository[]>('/api/repos')
       .pipe(
-        tap((data) => this.repos.set(data)),
+        tap((data) => {
+          this.repos.set(data);
+          if (data.length > 0 && !this.selectedRepo()) {
+            this.selectRepo(data[0]);
+          }
+        }),
         catchError((err) => {
           console.error('Failed to load repositories:', err);
-          const errMsg = err.error?.error || 'Failed to retrieve repository configurations. Verify that your .env file is set up and gh CLI is authenticated.';
+          const errMsg = err.error?.error || 'Failed to retrieve repository configurations. Verify that your .env file is set up with a valid GITHUB_TOKEN.';
           this.error.set(errMsg);
-          return throwError(() => err);
+          return of([]);
         }),
         finalize(() => this.loading.set(false))
       )
